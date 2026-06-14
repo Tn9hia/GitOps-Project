@@ -1,0 +1,55 @@
+# --- Network ---
+squid_internal_network: "172.16.10.0/24" 
+
+squid_dns_nameserver: "8.8.8.8" 
+
+# --- Proxy ---
+squid_port: 3128
+squid_hostname: "squid-proxy"
+squid_cache_size_mb: 2048
+squid_cache_mem: "256 MB"
+
+
+squid_users:
+  - name: squid-client
+    password: "{{ squid_client_password }}"
+
+# --- ACL ---
+squid_safe_ports:
+  - 80
+  - 443
+  - 8080
+  - 6443
+  - 8200
+
+squid_allowed_domains:
+  - .ubuntu.com
+  - .debian.org
+  - .docker.io
+  - .ghcr.io
+  - .github.com
+  - .githubusercontent.com
+  - .quay.io
+  - .k8s.io
+  - .gcr.io
+  - .pypi.org
+  - .npmjs.com
+  - .powerdns.com
+  - releases.hashicorp.com
+  - apt.releases.hashicorp.com
+  - packages.gitlab.com
+  - .cdn.teleport.dev
+  - .helm.sh
+  - .grafana.com
+  - .pkgs.k8s.io
+  - .googleapis.com
+  - .nghia.internal
+  - .gitlab.com
+  - .github.com
+
+squid_blocked_domains:
+  - .facebook.com
+  - .instagram.com
+  - .tiktok.com
+  - .twitter.com
+  - .x.com

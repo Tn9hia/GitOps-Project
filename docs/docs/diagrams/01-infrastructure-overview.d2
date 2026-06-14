@@ -1,0 +1,297 @@
+title: Air-Gap GitOps Lab — Infrastructure Overview {
+  near: top-center
+  shape: text
+  style.font-size: 24
+  style.bold: true
+}
+
+# ─── INTERNET ───
+internet: Internet {
+  shape: cloud
+  style.fill: "#e8f4f8"
+  style.stroke: "#5ba4cf"
+}
+
+# ─── VMWARE VCLOUD DIRECTOR (outer boundary) ───
+vcloud: VMware vCloud Director {
+  style.fill: "#f0f4ff"
+  style.stroke: "#3b5bdb"
+  style.stroke-width: 3
+  style.font-size: 16
+  style.bold: true
+
+  # ─── AIR-GAP NETWORK ───
+  airgap: Air-Gap Internal Network {
+    style.fill: "#f8f9fa"
+    style.stroke: "#868e96"
+    style.stroke-dash: 4
+    style.font-size: 14
+
+    # ── Layer 0: Network Foundation ──
+    foundation: Network Foundation {
+      style.fill: "#fff3e0"
+      style.stroke: "#f57c00"
+      style.font-size: 13
+
+      squid: Squid Proxy {
+        shape: rectangle
+        style.fill: "#ffe0b2"
+        style.stroke: "#ef6c00"
+        label: "Squid Proxy\n(Outbound Control\nWhitelist ACL)"
+      }
+
+      powerdns: PowerDNS {
+        shape: rectangle
+        style.fill: "#ffe0b2"
+        style.stroke: "#ef6c00"
+        label: "PowerDNS\n(Internal DNS\nSplit-Horizon)"
+      }
+
+      ntpsec: NTPSec {
+        shape: rectangle
+        style.fill: "#ffe0b2"
+        style.stroke: "#ef6c00"
+        label: "NTPSec\n(Time Sync\nInternal Stratum)"
+      }
+    }
+
+    # ── Layer 1: Platform Services ──
+    platform: Platform Services {
+      style.fill: "#e8f5e9"
+      style.stroke: "#388e3c"
+      style.font-size: 13
+
+      vault: HashiCorp Vault {
+        shape: rectangle
+        style.fill: "#c8e6c9"
+        style.stroke: "#2e7d32"
+        label: "HashiCorp Vault\n(PKI CA · SSH CA\nSecret Management)"
+      }
+
+      gitlab: GitLab {
+        shape: rectangle
+        style.fill: "#c8e6c9"
+        style.stroke: "#2e7d32"
+        label: "GitLab\n(Source Control\n+ CI Platform)"
+      }
+
+      gitlab_runner: GitLab Runner {
+        shape: rectangle
+        style.fill: "#c8e6c9"
+        style.stroke: "#2e7d32"
+        label: "GitLab Runner\n(CI Job Executor)"
+      }
+
+      harbor: Harbor {
+        shape: rectangle
+        style.fill: "#c8e6c9"
+        style.stroke: "#2e7d32"
+        label: "Harbor\n(Private Registry\nTrivy · Cosign)"
+      }
+
+      aptly: aptly {
+        shape: rectangle
+        style.fill: "#c8e6c9"
+        style.stroke: "#2e7d32"
+        label: "aptly\n(APT Mirror\nPackage Control)"
+      }
+    }
+
+    # ── Layer 2: IaC & GitOps ──
+    iac: IaC & GitOps {
+      style.fill: "#fce4ec"
+      style.stroke: "#c62828"
+      style.font-size: 13
+
+      terraform: Terraform {
+        shape: rectangle
+        style.fill: "#ffcdd2"
+        style.stroke: "#b71c1c"
+        label: "Terraform\n(VM Provisioning\nvCloud Director)"
+      }
+
+      atlantis: Atlantis {
+        shape: rectangle
+        style.fill: "#ffcdd2"
+        style.stroke: "#b71c1c"
+        label: "Atlantis\n(Terraform GitOps\nPlan/Apply on PR)"
+      }
+
+      ansible: Ansible {
+        shape: rectangle
+        style.fill: "#ffcdd2"
+        style.stroke: "#b71c1c"
+        label: "Ansible\n(Config Management\nOS · Services)"
+      }
+
+      argocd: ArgoCD {
+        shape: rectangle
+        style.fill: "#ffcdd2"
+        style.stroke: "#b71c1c"
+        label: "ArgoCD\n(CD Engine\nGitOps Pull-based)"
+      }
+    }
+
+    # ── Layer 3: Access Management ──
+    access: Access Management {
+      style.fill: "#ede7f6"
+      style.stroke: "#6a1b9a"
+      style.font-size: 13
+
+      teleport: Teleport {
+        shape: rectangle
+        style.fill: "#d1c4e9"
+        style.stroke: "#4a148c"
+        label: "Teleport\n(PAM · SSH · K8s\nSession Recording)"
+      }
+    }
+
+    # ── Layer 4: Kubernetes Cluster ──
+    k8s: Kubernetes Cluster (3 Control Plane + 3 Worker) {
+      style.fill: "#e3f2fd"
+      style.stroke: "#1565c0"
+      style.stroke-width: 2
+      style.font-size: 13
+
+      haproxy: HAProxy {
+        shape: rectangle
+        style.fill: "#bbdefb"
+        style.stroke: "#0d47a1"
+        label: "HAProxy\n(External LB\nL4/L7)"
+      }
+
+      control_plane: Control Plane (x3) {
+        shape: rectangle
+        style.fill: "#90caf9"
+        style.stroke: "#0d47a1"
+        label: "Control Plane ×3\nkube-apiserver · etcd\nscheduler · controller-mgr"
+      }
+
+      worker: Worker Nodes (x3) {
+        style.fill: "#e1f5fe"
+        style.stroke: "#0277bd"
+
+        traefik: Traefik {
+          shape: rectangle
+          style.fill: "#b3e5fc"
+          style.stroke: "#01579b"
+          label: "Traefik\n(Ingress Controller\nTLS termination)"
+        }
+
+        argocd_w: ArgoCD {
+          shape: rectangle
+          style.fill: "#b3e5fc"
+          style.stroke: "#01579b"
+          label: "ArgoCD\n(CD)"
+        }
+
+        observability: Observability Stack {
+          shape: rectangle
+          style.fill: "#b3e5fc"
+          style.stroke: "#01579b"
+          label: "Prometheus · Grafana\nLoki\n(Metrics · Logs)"
+        }
+
+        workloads: App Workloads {
+          shape: rectangle
+          style.fill: "#b3e5fc"
+          style.stroke: "#01579b"
+          label: "App Workloads\n(Deployments\nStatefulSets...)"
+        }
+      }
+
+      cilium: Cilium CNI {
+        shape: rectangle
+        style.fill: "#bbdefb"
+        style.stroke: "#0d47a1"
+        label: "Cilium (CNI)\neBPF · NetworkPolicy\nreplace kube-proxy"
+      }
+
+      longhorn: Longhorn CSI {
+        shape: rectangle
+        style.fill: "#bbdefb"
+        style.stroke: "#0d47a1"
+        label: "Longhorn (CSI)\nDistributed Storage\nSnapshot · Backup"
+      }
+    }
+  }
+}
+
+# ─── CONNECTIONS ───
+
+# Outbound via Squid
+internet -> vcloud.airgap.foundation.squid: "Outbound\n(whitelisted)" {
+  style.stroke: "#ef6c00"
+  style.stroke-dash: 5
+}
+
+# NTP sync qua proxy
+vcloud.airgap.foundation.ntpsec -> vcloud.airgap.foundation.squid: "NTP upstream\nqua proxy" {
+  style.stroke: "#ef6c00"
+  style.stroke-dash: 3
+}
+
+# aptly mirror qua proxy
+vcloud.airgap.platform.aptly -> vcloud.airgap.foundation.squid: "apt mirror\nsync" {
+  style.stroke: "#ef6c00"
+  style.stroke-dash: 3
+}
+
+# Harbor mirror qua proxy
+vcloud.airgap.platform.harbor -> vcloud.airgap.foundation.squid: "image pull\nfrom upstream" {
+  style.stroke: "#ef6c00"
+  style.stroke-dash: 3
+}
+
+# GitLab Runner → Harbor
+vcloud.airgap.platform.gitlab_runner -> vcloud.airgap.platform.harbor: "push image\n(after build)" {
+  style.stroke: "#388e3c"
+}
+
+# GitLab → GitLab Runner
+vcloud.airgap.platform.gitlab -> vcloud.airgap.platform.gitlab_runner: "trigger CI job" {
+  style.stroke: "#388e3c"
+}
+
+# Atlantis → GitLab (watch MR)
+vcloud.airgap.iac.atlantis -> vcloud.airgap.platform.gitlab: "watch MR\nplan/apply" {
+  style.stroke: "#c62828"
+}
+
+# ArgoCD → GitLab (pull manifest)
+vcloud.airgap.iac.argocd -> vcloud.airgap.platform.gitlab: "pull manifest\n(CD repo)" {
+  style.stroke: "#c62828"
+}
+
+# ArgoCD → K8s
+vcloud.airgap.iac.argocd -> vcloud.airgap.k8s.worker.argocd_w: "sync\nresources" {
+  style.stroke: "#c62828"
+}
+
+# Vault → TLS certs
+vcloud.airgap.platform.vault -> vcloud.airgap.k8s.worker.traefik: "issue TLS cert\n(PKI CA)" {
+  style.stroke: "#2e7d32"
+  style.stroke-dash: 3
+}
+
+# Vault → SSH CA
+vcloud.airgap.platform.vault -> vcloud.airgap.access.teleport: "SSH cert signing\n(SSH CA)" {
+  style.stroke: "#2e7d32"
+  style.stroke-dash: 3
+}
+
+# Teleport → K8s access
+vcloud.airgap.access.teleport -> vcloud.airgap.k8s.control_plane: "kubectl proxy\n(K8s access)" {
+  style.stroke: "#6a1b9a"
+}
+
+# DNS resolves everything
+vcloud.airgap.foundation.powerdns -> vcloud.airgap.k8s: "internal DNS\nresolution" {
+  style.stroke: "#f57c00"
+  style.stroke-dash: 3
+}
+
+# HAProxy → Worker
+vcloud.airgap.k8s.haproxy -> vcloud.airgap.k8s.worker.traefik: "L4/L7 LB\nrouting" {
+  style.stroke: "#1565c0"
+}

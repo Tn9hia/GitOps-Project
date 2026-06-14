@@ -1,0 +1,12 @@
+timezone: Asia/Ho_Chi_Minh
+
+# Proxy
+proxy:
+  host: 172.16.10.1
+  port: 3128
+  user: squid-client
+  password: "{{ squid_client_password }}"
+  no_proxy: "localhost,127.0.0.1,.nghia.internal"
+
+ntp_primary: 172.16.10.3
+ntp_fallback: pool.ntp.org

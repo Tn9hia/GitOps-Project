@@ -1,0 +1,22 @@
+---
+- name: Check if node already joined the cluster
+  ansible.builtin.stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: k8s_joined
+
+- name: Read join token
+  ansible.builtin.slurp:
+    src: "{{ join_token_file }}"
+  register: join_token
+
+- name: Read CA cert hash
+  ansible.builtin.slurp:
+    src: "{{ ca_cert_hash_file }}"
+  register: ca_cert_hash
+
+- name: Join worker node to cluster
+  ansible.builtin.command: >
+    kubeadm join {{ hostvars[groups['k8s_control_plane'][0]].ansible_host }}:6443
+    --token {{ join_token.content | b64decode | trim }}
+    --discovery-token-ca-cert-hash {{ ca_cert_hash.content | b64decode | trim }}
+  when: not k8s_joined.stat.exists

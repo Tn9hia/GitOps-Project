@@ -1,0 +1,193 @@
+title: CI/CD Pipeline Flow {
+  near: top-center
+  shape: text
+  style.font-size: 22
+  style.bold: true
+}
+
+direction: right
+
+# ─── ACTORS ───
+dev: Developer {
+  shape: person
+  style.fill: "#e8eaf6"
+  style.stroke: "#3949ab"
+}
+
+# ─── APP REPO PATH ───
+gitlab_app: GitLab\n(App Repo) {
+  shape: rectangle
+  style.fill: "#c8e6c9"
+  style.stroke: "#2e7d32"
+}
+
+runner: GitLab Runner {
+  shape: rectangle
+  style.fill: "#c8e6c9"
+  style.stroke: "#2e7d32"
+}
+
+build: Build & Test {
+  shape: rectangle
+  style.fill: "#fff9c4"
+  style.stroke: "#f9a825"
+  label: "Build Image\n(Docker multi-stage)"
+}
+
+scan: Security Scan {
+  shape: rectangle
+  style.fill: "#fff9c4"
+  style.stroke: "#f9a825"
+  label: "Trivy Scan\n(vuln check)"
+}
+
+sign: Sign Image {
+  shape: rectangle
+  style.fill: "#fff9c4"
+  style.stroke: "#f9a825"
+  label: "Cosign Sign\n(image signing)"
+}
+
+harbor: Harbor\n(Private Registry) {
+  shape: cylinder
+  style.fill: "#bbdefb"
+  style.stroke: "#1565c0"
+}
+
+# ─── MANIFEST REPO PATH ───
+tag_update: Update Image Tag {
+  shape: rectangle
+  style.fill: "#fce4ec"
+  style.stroke: "#c62828"
+  label: "Update image tag\nin manifest repo"
+}
+
+gitlab_manifest: GitLab\n(Manifest Repo) {
+  shape: rectangle
+  style.fill: "#c8e6c9"
+  style.stroke: "#2e7d32"
+}
+
+argocd: ArgoCD {
+  shape: rectangle
+  style.fill: "#ede7f6"
+  style.stroke: "#6a1b9a"
+  label: "ArgoCD\n(drift detection\n+ sync)"
+}
+
+k8s: Kubernetes Cluster {
+  shape: rectangle
+  style.fill: "#e3f2fd"
+  style.stroke: "#1565c0"
+  label: "Kubernetes\n(deploy workloads)"
+}
+
+# ─── TERRAFORM PATH ───
+atlantis: Atlantis {
+  shape: rectangle
+  style.fill: "#ffcdd2"
+  style.stroke: "#b71c1c"
+  label: "Atlantis\n(Terraform GitOps)"
+}
+
+tf_plan: terraform plan {
+  shape: rectangle
+  style.fill: "#fff9c4"
+  style.stroke: "#f9a825"
+}
+
+tf_apply: terraform apply {
+  shape: rectangle
+  style.fill: "#fff9c4"
+  style.stroke: "#f9a825"
+}
+
+vcloud: vCloud Director\n(Infrastructure) {
+  shape: rectangle
+  style.fill: "#f0f4ff"
+  style.stroke: "#3b5bdb"
+}
+
+# ─── CI FLOW ───
+dev -> gitlab_app: "git push /\nopen MR" {
+  style.stroke: "#3949ab"
+}
+
+gitlab_app -> runner: "trigger CI\npipeline" {
+  style.stroke: "#2e7d32"
+}
+
+runner -> build: "" {
+  style.stroke: "#f9a825"
+}
+
+build -> scan: "" {
+  style.stroke: "#f9a825"
+}
+
+scan -> sign: "pass ✓" {
+  style.stroke: "#f9a825"
+}
+
+sign -> harbor: "push signed\nimage" {
+  style.stroke: "#1565c0"
+}
+
+harbor -> tag_update: "image pushed\ntrigger update" {
+  style.stroke: "#c62828"
+}
+
+tag_update -> gitlab_manifest: "commit tag\nupdate" {
+  style.stroke: "#c62828"
+}
+
+# ─── CD FLOW ───
+gitlab_manifest -> argocd: "ArgoCD watch\n(pull-based)" {
+  style.stroke: "#6a1b9a"
+}
+
+argocd -> k8s: "sync resources\n(drift detected)" {
+  style.stroke: "#6a1b9a"
+}
+
+# ─── TERRAFORM FLOW ───
+dev -> gitlab_app: "" {
+  style.stroke: "#3949ab"
+  style.opacity: 0
+}
+
+gitlab_app -> atlantis: "Terraform MR\ntrigger" {
+  style.stroke: "#b71c1c"
+  style.stroke-dash: 4
+}
+
+atlantis -> tf_plan: "on MR open" {
+  style.stroke: "#b71c1c"
+}
+
+tf_plan -> gitlab_app: "post plan\nresult to MR" {
+  style.stroke: "#b71c1c"
+}
+
+atlantis -> tf_apply: "on MR merge" {
+  style.stroke: "#b71c1c"
+}
+
+tf_apply -> vcloud: "provision\ninfra" {
+  style.stroke: "#3b5bdb"
+}
+
+# ─── NOTES ───
+note_ci: "CI Repo: App code\n→ build → image" {
+  shape: text
+  style.font-size: 12
+  style.italic: true
+  style.fill: "#fffde7"
+}
+
+note_cd: "CD Repo: Manifests\n→ ArgoCD syncs" {
+  shape: text
+  style.font-size: 12
+  style.italic: true
+  style.fill: "#fffde7"
+}

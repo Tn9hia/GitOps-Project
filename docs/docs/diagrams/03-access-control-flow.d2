@@ -1,0 +1,183 @@
+title: Access Control Flow — Air-Gap Environment {
+  near: top-center
+  shape: text
+  style.font-size: 22
+  style.bold: true
+}
+
+direction: right
+
+# ─── ENGINEER ───
+engineer: Engineer {
+  shape: person
+  style.fill: "#e8eaf6"
+  style.stroke: "#3949ab"
+  label: "Engineer\n(remote)"
+}
+
+vpn: VPN Tunnel {
+  shape: rectangle
+  style.fill: "#fff3e0"
+  style.stroke: "#ef6c00"
+  label: "VPN\n(entry point\nto vCloud network)"
+}
+
+# ─── AUTH LAYER ───
+auth: Authentication Layer {
+  style.fill: "#fce4ec"
+  style.stroke: "#c62828"
+
+  teleport_proxy: Teleport Proxy {
+    shape: rectangle
+    style.fill: "#ffcdd2"
+    style.stroke: "#b71c1c"
+    label: "Teleport Proxy\n(single entry point\naudit · recording)"
+  }
+
+  vault: HashiCorp Vault {
+    shape: rectangle
+    style.fill: "#ffcdd2"
+    style.stroke: "#b71c1c"
+    label: "Vault\n(SSH CA · PKI\nOIDC auth)"
+  }
+}
+
+# ─── TARGETS ───
+targets: Access Targets {
+  style.fill: "#e3f2fd"
+  style.stroke: "#1565c0"
+
+  linux_servers: Linux Servers {
+    shape: rectangle
+    style.fill: "#bbdefb"
+    style.stroke: "#0d47a1"
+    label: "Linux Servers\n(Squid · DNS · NTP\naptly · GitLab · Harbor...)"
+  }
+
+  k8s: Kubernetes Cluster {
+    shape: rectangle
+    style.fill: "#bbdefb"
+    style.stroke: "#0d47a1"
+    label: "Kubernetes\n(kubectl · exec\nport-forward)"
+  }
+
+  gitlab_ui: GitLab Web UI {
+    shape: rectangle
+    style.fill: "#bbdefb"
+    style.stroke: "#0d47a1"
+    label: "GitLab\n(Web UI · API\nCI/CD)"
+  }
+}
+
+# ─── CERT FLOW ───
+cert_flow: SSH Certificate Lifecycle {
+  style.fill: "#e8f5e9"
+  style.stroke: "#388e3c"
+
+  request: Request SSH Cert {
+    shape: rectangle
+    style.fill: "#c8e6c9"
+    style.stroke: "#2e7d32"
+    label: "1. Auth via OIDC\n→ request SSH cert"
+  }
+
+  issue: Vault Issues Cert {
+    shape: rectangle
+    style.fill: "#c8e6c9"
+    style.stroke: "#2e7d32"
+    label: "2. Vault signs cert\n(TTL: 4h · role-based)"
+  }
+
+  use: Use Cert {
+    shape: rectangle
+    style.fill: "#c8e6c9"
+    style.stroke: "#2e7d32"
+    label: "3. SSH with cert\n(no static key)"
+  }
+
+  expire: Cert Expires {
+    shape: rectangle
+    style.fill: "#c8e6c9"
+    style.stroke: "#2e7d32"
+    label: "4. TTL expired\n→ auto revoked"
+  }
+}
+
+# ─── AUDIT ───
+audit: Audit & Observability {
+  style.fill: "#ede7f6"
+  style.stroke: "#6a1b9a"
+
+  teleport_audit: Teleport Audit Log {
+    shape: rectangle
+    style.fill: "#d1c4e9"
+    style.stroke: "#4a148c"
+    label: "Session Recording\nCommand Audit\nAccess Events"
+  }
+
+  vault_audit: Vault Audit Log {
+    shape: rectangle
+    style.fill: "#d1c4e9"
+    style.stroke: "#4a148c"
+    label: "Secret Access Log\nCert Issuance\nAuth Events"
+  }
+}
+
+# ─── CONNECTIONS ───
+
+# Entry flow
+engineer -> vpn: "connect VPN\n(external)" {
+  style.stroke: "#ef6c00"
+}
+
+vpn -> auth.teleport_proxy: "all access\nthrough Teleport" {
+  style.stroke: "#c62828"
+  style.stroke-width: 2
+}
+
+# Teleport ↔ Vault
+auth.teleport_proxy -> auth.vault: "SSH cert\nrequest" {
+  style.stroke: "#c62828"
+}
+
+auth.vault -> auth.teleport_proxy: "signed cert\n(TTL-based)" {
+  style.stroke: "#388e3c"
+}
+
+# Teleport → Targets
+auth.teleport_proxy -> targets.linux_servers: "SSH (cert-based)\nno password, no static key" {
+  style.stroke: "#1565c0"
+}
+
+auth.teleport_proxy -> targets.k8s: "kubectl proxy\n(Teleport K8s integration)" {
+  style.stroke: "#1565c0"
+}
+
+auth.teleport_proxy -> targets.gitlab_ui: "web app\nproxy" {
+  style.stroke: "#1565c0"
+}
+
+# Cert lifecycle
+cert_flow.request -> cert_flow.issue: "" { style.stroke: "#388e3c" }
+cert_flow.issue -> cert_flow.use: "" { style.stroke: "#388e3c" }
+cert_flow.use -> cert_flow.expire: "" { style.stroke: "#388e3c" }
+
+# Audit feeds
+auth.teleport_proxy -> audit.teleport_audit: "all session\nevents" {
+  style.stroke: "#6a1b9a"
+  style.stroke-dash: 3
+}
+
+auth.vault -> audit.vault_audit: "all vault\nevents" {
+  style.stroke: "#6a1b9a"
+  style.stroke-dash: 3
+}
+
+# Security notes
+no_static_key: "⚠ No static SSH keys\n⚠ No password auth\n⚠ Short TTL certs only\n⚠ All sessions recorded" {
+  shape: text
+  style.font-size: 13
+  style.bold: true
+  style.fill: "#fff9c4"
+  style.stroke: "#f9a825"
+}

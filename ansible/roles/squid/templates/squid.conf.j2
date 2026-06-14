@@ -1,0 +1,72 @@
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+http_port {{ squid_port }}
+visible_hostname {{ squid_hostname }}
+dns_nameservers {{ squid_dns_nameserver }}
+
+# --- Authentication ---
+auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
+auth_param basic realm "Squid Proxy - Authenticate to proceed"
+auth_param basic credentialsttl 2 hours
+auth_param basic casesensitive off
+acl authenticated_users proxy_auth REQUIRED
+
+# --- Network ---
+acl localnet src {{ squid_internal_network }}
+
+# --- Ports ---
+acl SSL_ports port 443
+{% for port in squid_safe_ports %}
+acl Safe_ports port {{ port }}
+{% endfor %}
+acl CONNECT method CONNECT
+
+# --- Whitelist ---
+{% for domain in squid_allowed_domains %}
+acl allowed_domains dstdomain {{ domain }}
+{% endfor %}
+
+# --- Blacklist ---
+{% for domain in squid_blocked_domains %}
+acl social_media dstdomain {{ domain }}
+{% endfor %}
+
+# --- Access Control ---
+http_access deny !Safe_ports
+http_access deny CONNECT !SSL_ports
+http_access allow localhost manager
+http_access deny manager
+http_access deny !authenticated_users
+http_access deny social_media
+http_access allow localnet allowed_domains
+http_access deny all
+
+# --- Cache Storage ---
+cache_dir ufs {{ squid_cache_dir }} {{ squid_cache_size_mb }} 16 256
+cache_mem {{ squid_cache_mem }}
+maximum_object_size_in_memory 512 KB
+
+acl static_content urlpath_regex -i \
+    \.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)(\?.*)?$
+
+cache allow static_content
+cache deny all
+
+# --- Refresh Patterns ---
+refresh_pattern ^ftp:                                1440  20%  10080
+refresh_pattern ^gopher:                             1440   0%   1440
+refresh_pattern -i \.(jpg|jpeg|png|gif|ico|svg)$   10080  50%  43200 ignore-no-cache
+refresh_pattern -i \.(css|js)$                      1440  50%  10080
+refresh_pattern -i \.(woff|woff2|ttf|eot)$        43200  80% 129600
+refresh_pattern .                                       0  20%   4320
+
+# --- Logging ---
+access_log {{ squid_log_dir }}/access.log squid
+cache_log {{ squid_log_dir }}/cache.log
+cache_store_log none
+
+# --- Tuning ---
+max_filedescriptors 65536
+connect_timeout 30 seconds
+read_timeout 60 seconds
+request_timeout 60 seconds

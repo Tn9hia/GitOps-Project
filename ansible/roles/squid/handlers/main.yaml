@@ -1,0 +1,18 @@
+---
+
+- name: Stop squid
+  ansible.builtin.service:
+    name: "{{ squid_service }}"
+    state: stopped
+  listen: "Stop squid"
+
+- name: Init squid cache
+  ansible.builtin.command: squid -z
+  changed_when: true
+  listen: "Init squid cache"
+
+- name: Start squid
+  ansible.builtin.service:
+    name: "{{ squid_service }}"
+    state: started
+  listen: "Start squid"

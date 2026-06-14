@@ -1,0 +1,16 @@
+---
+# Variables for all k8s nodes
+
+containerd_version: "2.2.0"
+containerd_arch: "linux-amd64"
+cni_version: "1.8.0"
+cni_arch: "linux-amd64"
+kubernetes_version: "v1.34"
+kubernetes_keyring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+kubernetes_repo_file: "/etc/apt/sources.list.d/kubernetes.list"
+pod_network_cidr: "10.244.0.0/16"
+k8s_control_plane_endpoint: "172.16.10.6:6443"  # HAProxy VIP
+
+join_token_file: "/tmp/k8s-join-token"
+ca_cert_hash_file: "/tmp/k8s-ca-cert-hash"
+kubeconfig_path: "/root/.kube/config"

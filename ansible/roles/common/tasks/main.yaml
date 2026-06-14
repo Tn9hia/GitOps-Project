@@ -1,0 +1,16 @@
+---
+- name: Setup proxy
+  ansible.builtin.import_tasks: proxy.yaml
+  tags: proxy
+
+- name: Setup ntp
+  ansible.builtin.import_tasks: ntp.yaml
+  tags: ntp
+
+- name: Setup timezone
+  ansible.builtin.import_tasks: timezone.yaml
+  tags: timezone
+
+- name: Setup dns
+  ansible.builtin.import_tasks: dns.yaml
+  tags: dns

@@ -1,0 +1,9 @@
+---
+- name: Setup squid proxy
+  hosts: squid
+  become: yes
+  roles:
+    - role: common
+  tags:
+    - common
+  

@@ -1,0 +1,7 @@
+PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+# http proxy
+http_proxy="http://{{ proxy.user }}:{{ proxy.password }}@{{ proxy.host }}:{{ proxy.port }}"
+# https proxy
+https_proxy="http://{{ proxy.user }}:{{ proxy.password }}@{{ proxy.host }}:{{ proxy.port }}"
+# no proxy
+no_proxy="{{ proxy.no_proxy }}"

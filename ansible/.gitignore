@@ -1,0 +1,6 @@
+ansible_structure_annotated.html
+.vault_password
+*.retry
+.claude
+CLAUDE.md
+/sample

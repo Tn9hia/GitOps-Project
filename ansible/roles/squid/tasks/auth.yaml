@@ -1,0 +1,21 @@
+---
+- name: Ensure passwd file exists with correct ownership
+  ansible.builtin.file:
+    path: "{{ squid_passwd_path }}"
+    state: touch
+    owner: proxy
+    group: proxy
+    mode: "0640"
+    modification_time: preserve
+    access_time: preserve
+
+- name: Create or update proxy users
+  community.general.htpasswd:
+    path: "{{ squid_passwd_path }}"
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    owner: proxy
+    group: proxy
+    mode: "0640"
+  loop: "{{ squid_users }}"
+  no_log: true   # never log passwords
