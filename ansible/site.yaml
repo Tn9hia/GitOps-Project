@@ -1,7 +1,9 @@
 ---
-- import_playbook: playbooks/baseline/common.yaml
-  tags: [common]
-- import_playbook: playbooks/phase1-foundation/squid.yaml
-  tags: [squid]
-- import_playbook: playbooks/kubernetes/k8s-cluster.yaml
-  tags: [kubernetes]
+- import_playbook: playbooks/prepare-vm/main.yml
+  tags: [prepare-vm]
+
+- import_playbook: playbooks/basic-service/main.yml
+  tags: [basic-service]
+
+- import_playbook: playbooks/k8s-cluster/main.yml
+  tags: [k8s]

@@ -1,0 +1,5 @@
+#!/bin/sh
+# {{ ansible_managed }}
+export http_proxy="{{ common_proxy_url }}"
+export https_proxy="{{ common_proxy_url }}"
+export no_proxy="{{ common_no_proxy | default('localhost,127.0.0.1,10.0.0.0/8') }}"

@@ -1,0 +1,28 @@
+# roles/common/tasks/dns.yml
+---
+- name: Ensure systemd-resolved is installed
+  apt:
+    name: systemd-resolved
+    state: present
+
+- name: Configure DNS resolvers via systemd-resolved
+  template:
+    src: resolved.conf.j2
+    dest: /etc/systemd/resolved.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart systemd-resolved
+
+- name: Ensure systemd-resolved enabled and running
+  systemd:
+    name: systemd-resolved
+    enabled: yes
+    state: started
+
+- name: Ensure /etc/resolv.conf points to systemd-resolved stub
+  file:
+    src: /run/systemd/resolve/stub-resolv.conf
+    dest: /etc/resolv.conf
+    state: link
+    force: yes

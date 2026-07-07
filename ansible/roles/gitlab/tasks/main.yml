@@ -1,0 +1,38 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+- name: Add gitlab package repository
+  shell: |
+    curl --location "https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh" | sudo bash
+
+- name: Install GitLab
+  apt:
+    name: gitlab-ce
+    state: present
+
+- name: Configure GitLab
+  template:
+    src: gitlab.rb.j2
+    dest: /etc/gitlab/gitlab.rb
+  notify: Reconfigure GitLab
+
+- name: Ensure SSL directory exists
+  file:
+    path: "{{ gitlab_ssl_certificate | dirname }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy SSL certificate
+  copy:
+    src: "{{ gitlab_ssl_certificate_src }}"
+    dest: "{{ gitlab_ssl_certificate }}"
+    mode: '0644'
+  notify: Reconfigure GitLab
+
+- name: Copy SSL private key
+  copy:
+    src: "{{ gitlab_ssl_certificate_key_src }}"
+    dest: "{{ gitlab_ssl_certificate_key }}"
+    mode: '0600'
+  notify: Reconfigure GitLab

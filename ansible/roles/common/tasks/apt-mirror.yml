@@ -1,0 +1,20 @@
+---
+- name: Fetch aptly repo public key
+  ansible.builtin.get_url:
+    url: "{{ aptly_repo_key_url }}"
+    dest: /tmp/aptly.key
+    mode: '0644'
+
+- name: Dearmor key into keyring
+  ansible.builtin.shell: |
+    gpg --dearmor -o /usr/share/keyrings/aptly-internal.gpg /tmp/aptly.key
+  args:
+    creates: /usr/share/keyrings/aptly-internal.gpg
+  notify: apt update
+
+- name: Deploy aptly source list
+  ansible.builtin.template:
+    src: aptly-internal.list.j2
+    dest: /etc/apt/sources.list.d/aptly-internal.list
+    mode: '0644'
+  notify: apt update

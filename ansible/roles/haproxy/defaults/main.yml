@@ -1,0 +1,8 @@
+---
+# Remote paths where haproxy config expects the cert/key to live
+haproxy_ssl_certificate: "/etc/haproxy/certs/gitlab.nghia.internal.crt"
+haproxy_ssl_certificate_key: "/etc/haproxy/certs/gitlab.nghia.internal.key"
+
+# Local, vault-encrypted source files (relative to the ansible/ directory)
+haproxy_ssl_certificate_src: "./ssl/fullchain.pem"
+haproxy_ssl_certificate_key_src: "./ssl/privkey.pem"

@@ -1,0 +1,6 @@
+---
+- name: Reload ntpsec
+  systemd:
+    name: ntpsec
+    state: restarted
+  tags: ntpsec

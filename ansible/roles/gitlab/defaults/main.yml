@@ -1,0 +1,17 @@
+gitlab_external_url: "https://gitlab.nghia.internal"
+
+# Remote paths where gitlab.rb expects the cert/key to live
+gitlab_ssl_certificate: "/etc/gitlab/ssl/gitlab.nghia.internal.crt"
+gitlab_ssl_certificate_key: "/etc/gitlab/ssl/gitlab.nghia.internal.key"
+
+# Local, vault-encrypted source files (relative to the ansible/ directory)
+gitlab_ssl_certificate_src: "{{ playbook_dir }}/ssl/fullchain.pem"
+gitlab_ssl_certificate_key_src: "{{ playbook_dir }}/ssl/privkey.pem"
+
+gitlab_letsencrypt_enable: false
+gitlab_registry_enable: false
+gitlab_smtp_enable: false
+gitlab_ssh_port: 22
+gitlab_backup_path: "/var/opt/gitlab/backups"
+gitlab_backup_keep_time: 604800
+gitlab_time_zone: "Asia/Ho_Chi_Minh"

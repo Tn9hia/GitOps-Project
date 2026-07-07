@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+[Resolve]
+DNS={{ common_dns_servers | join(' ') }}
+FallbackDNS={{ common_dns_fallback | default('1.1.1.1 8.8.8.8') }}
+Domains={{ common_dns_search_domain | default('') }}

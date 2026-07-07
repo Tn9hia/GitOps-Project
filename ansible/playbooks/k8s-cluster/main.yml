@@ -1,0 +1,11 @@
+---
+- name: Prepare all Kubernetes nodes (containerd, kubeadm, kubelet, kubectl)
+  hosts: k8s
+  become: true
+  roles:
+    - role: k8s-common
+  tags: [k8s-common]
+
+# roles/k8s-init-cluster (kubeadm init on the first control-plane node) and
+# roles/k8s-add-worker (kubeadm join) are still empty placeholders and are
+# intentionally not wired in yet.

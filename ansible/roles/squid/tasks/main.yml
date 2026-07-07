@@ -1,0 +1,43 @@
+---
+# Update packages
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install Squid proxy server
+  apt:
+    name: squid
+    state: present
+
+- name: Install passlib (required by htpasswd module)
+  apt:
+    name: python3-passlib
+    state: present
+
+- name: Create Squid basic-auth password file
+  community.general.htpasswd:
+    path: /etc/squid/passwd
+    name: "{{ item.username }}"
+    password: "{{ item.password }}"
+    owner: proxy
+    group: proxy
+    mode: '0640'
+  loop: "{{ squid_auth_users }}"
+  loop_control:
+    label: "{{ item.username }}"
+  no_log: true
+
+- name: Ensure Squid service is started and enabled
+  service:
+    name: squid
+    state: started
+    enabled: yes
+
+- name: Deploy Squid configuration
+  template:
+    src: squid.conf.j2
+    dest: /etc/squid/squid.conf
+    mode: '0644'
+    validate: squid -k parse -f %s
+  notify: Reload Squid

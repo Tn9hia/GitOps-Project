@@ -11,6 +11,7 @@
 *.tfvars
 .env
 CLAUDE.md
+ansible-bk/
 
 # Obsidian
 .makemd

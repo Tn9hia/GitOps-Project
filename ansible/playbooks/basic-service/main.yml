@@ -1,0 +1,35 @@
+---
+- name: Configure dedicated NTP server (low stratum)
+  hosts: ntp
+  become: true
+  roles:
+    - role: ntpsec
+  tags: [ntpsec]
+
+- name: Configure internal DNS (PowerDNS)
+  hosts: dns
+  become: true
+  roles:
+    - role: powerdns
+  tags: [dns, powerdns]
+
+- name: Configure Squid forward proxy
+  hosts: squid
+  become: true
+  roles:
+    - role: squid
+  tags: [squid]
+
+- name: Configure GitLab
+  hosts: gitlab
+  become: true
+  roles:
+    - role: gitlab
+  tags: [gitlab]
+
+- name: Configure HAProxy load balancer
+  hosts: haproxy
+  become: true
+  roles:
+    - role: haproxy
+  tags: [haproxy]

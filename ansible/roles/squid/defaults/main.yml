@@ -1,0 +1,77 @@
+---
+# PowerDNS internal IP for DNS resolution
+powerdns_internal_ip: 172.16.10.2
+
+# Squid proxy configuration
+squid_http_port: 3128
+squid_visible_hostname: squid-proxy
+
+# Authentication settings
+squid_auth_realm: "Squid Proxy - Authenticate to proceed"
+squid_auth_credential_ttl: "2 hours"
+squid_auth_casesensitive: off
+
+# Network configuration
+squid_localnet_cidr: 172.16.10.0/24
+
+# Trusted ports
+squid_ssl_ports:
+  - 443
+  - 8200
+
+squid_safe_ports:
+  - 80
+  - 443
+  - 6443
+  - 8080
+  - 8200
+
+# Trusted domains
+squid_trusted_domains:
+  - .ubuntu.com
+  - .debian.org
+  - .docker.io
+  - .ghcr.io
+  - .github.com
+  - .githubusercontent.com
+  - .quay.io
+  - .k8s.io
+  - .gcr.io
+  - .pypi.org
+  - .npmjs.com
+  - .powerdns.com
+  - repo.powerdns.com
+  - releases.hashicorp.com
+  - apt.releases.hashicorp.com
+  - packages.gitlab.com
+  - keyserver.ubuntu.com
+  - .cdn.teleport.dev
+  - cdn.teleport.dev
+  - .falcosecurity.github.io
+  - .helm.sh
+  - .argoproj.github.io
+  - .grafana.github.io
+  - .prometheus-community.github.io
+  - .vmware-tanzu.github.io
+  - .grafana.com
+  - .pkgs.k8s.io
+
+# Block domain
+squid_blocked_domains:
+  - facebook.com
+  - instagram.com
+  - twitter.com
+  - youtube.com
+  - whatsapp.com
+  - tiktok.com
+  - snapchat.com
+  - reddit.com
+  - linkedin.com
+  - twitch.tv
+
+# Basic-auth users for proxy access.
+# Set real credentials via vault-encrypted group_vars, e.g.:
+#   squid_auth_users:
+#     - username: ci-runner
+#       password: "{{ vault_squid_ci_runner_password }}"
+squid_auth_users: []

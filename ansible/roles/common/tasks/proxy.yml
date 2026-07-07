@@ -1,0 +1,49 @@
+# roles/common/tasks/proxy.yml
+---
+# Configure system proxy settings
+- name: Configure APT proxy (only if enabled)
+  template:
+    src: apt-proxy.conf.j2
+    dest: /etc/apt/apt.conf.d/95proxy
+    owner: root
+    group: root
+    mode: '0644'
+  when: common_proxy_enabled | default(false)
+
+- name: Remove APT proxy config (if disabled)
+  file:
+    path: /etc/apt/apt.conf.d/95proxy
+    state: absent
+  when: not (common_proxy_enabled | default(false))
+
+# Configure system-wide proxy in /etc/environment
+- name: Configure system-wide proxy in /etc/environment
+  lineinfile:
+    path: /etc/environment
+    regexp: "^{{ item.key }}="
+    line: "{{ item.key }}=\"{{ item.value }}\""
+    state: present
+  loop:
+    - { key: "http_proxy", value: "{{ common_proxy_url }}" }
+    - { key: "https_proxy", value: "{{ common_proxy_url }}" }
+    - { key: "HTTP_PROXY", value: "{{ common_proxy_url }}" }
+    - { key: "HTTPS_PROXY", value: "{{ common_proxy_url }}" }
+    - { key: "no_proxy", value: "{{ common_no_proxy | default('') }}" }
+    - { key: "NO_PROXY", value: "{{ common_no_proxy | default('') }}" }
+  loop_control:
+    label: "{{ item.key }}"
+  when: common_proxy_enabled | default(false)
+
+- name: Remove system-wide proxy from /etc/environment (if disabled)
+  lineinfile:
+    path: /etc/environment
+    regexp: "^{{ item }}="
+    state: absent
+  loop:
+    - http_proxy
+    - https_proxy
+    - HTTP_PROXY
+    - HTTPS_PROXY
+    - no_proxy
+    - NO_PROXY
+  when: not (common_proxy_enabled | default(false))

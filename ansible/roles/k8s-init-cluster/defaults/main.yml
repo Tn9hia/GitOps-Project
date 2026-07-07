@@ -1,0 +1,3 @@
+k8s-controlplane-endpoints: []
+k8s-api-server-port: 6443
+k8s-kubeadm-token: 

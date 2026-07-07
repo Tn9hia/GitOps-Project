@@ -1,0 +1,47 @@
+---
+# Update APT
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+# Install HAProxy
+- name: Install haproxy
+  apt:
+    name: haproxy
+    state: present
+
+# Ensure HAProxy is started and enabled
+- name: Ensure haproxy is running and enabled
+  service:
+    name: haproxy
+    state: started
+    enabled: true
+
+# Copy SSL certificate/key
+- name: Ensure SSL directory exists
+  file:
+    path: "{{ haproxy_ssl_certificate | dirname }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy SSL certificate
+  copy:
+    src: "{{ haproxy_ssl_certificate_src }}"
+    dest: "{{ haproxy_ssl_certificate }}"
+    mode: '0644'
+  notify: Reload haproxy
+
+- name: Copy SSL private key
+  copy:
+    src: "{{ haproxy_ssl_certificate_key_src }}"
+    dest: "{{ haproxy_ssl_certificate_key }}"
+    mode: '0600'
+  notify: Reload haproxy
+
+# Copy HAProxy configuration
+- name: Copy haproxy configuration
+  template:
+    src: haproxy.conf.j2
+    dest: /etc/haproxy/haproxy.cfg
+    mode: '0644'
+  notify: Reload haproxy

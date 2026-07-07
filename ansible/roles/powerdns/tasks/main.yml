@@ -1,0 +1,10 @@
+- name: Update package repositories
+  apt:
+    update_cache: yes
+
+- name: Add PowerDNS repository
+  apt_repository:
+    repo: "deb http://repo.powerdns.com/debian/ $(lsb_release -sc) stable"
+    filename: powerdns
+    keyserver: keyserver.ubuntu.com
+    keyid: 0x4E2C6E89A38F21E2

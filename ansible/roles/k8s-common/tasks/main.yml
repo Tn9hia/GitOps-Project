@@ -1,0 +1,269 @@
+# Ansible tasks for common setup on all Kubernetes nodes
+
+# Update and upgrade the system
+- name: Set hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+  tags: init-setup
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  when: ansible_facts['os_family'] == "Debian"
+  tags: init-setup
+  
+- name: Upgrade all packages to the latest version
+  apt:
+    upgrade: dist
+  when: ansible_facts['os_family'] == "Debian"
+  tags: init-setup
+
+# Install common packages
+- name: Install common packages
+  apt:
+    name:
+      - curl
+      - apt-transport-https
+      - ca-certificates
+      - software-properties-common
+      - gnupg
+      - lsb-release
+      - gpg
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
+  tags: init-setup
+
+# System configurations
+# Disable swap, load necessary kernel modules, set sysctl params
+- name: Disable swap immediately
+  command: swapoff -a
+  when: ansible_facts['swaptotal_mb'] > 0
+
+- name: Mask swap.target to prevent any swap backend from re-enabling
+  ansible.builtin.systemd:
+    name: swap.target
+    masked: yes
+    state: stopped
+
+- name: Remove zram-config if present (common on cloud images)
+  ansible.builtin.apt:
+    name: zram-config
+    state: absent
+  ignore_errors: true
+  
+- name: Load br_netfilter module
+  modprobe:
+    name: br_netfilter
+    state: present
+  tags: init-setup
+  
+- name: Ensure br_netfilter module is loaded on boot
+  lineinfile: path=/etc/modules-load.d/k8s.conf line=br_netfilter create=yes
+  tags: init-setup
+  
+- name: Load overlay module
+  modprobe:
+    name: overlay
+    state: present
+  tags: init-setup
+  
+- name: Ensure overlay module is loaded on boot
+  lineinfile: path=/etc/modules-load.d/k8s.conf line=overlay create=yes
+  tags: init-setup
+
+- name: Set sysctl params
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { name: "net.bridge.bridge-nf-call-iptables", value: 1 }
+    - { name: "net.ipv4.ip_forward", value: 1 }
+    - { name: "net.bridge.bridge-nf-call-ip6tables", value: 1 }
+  tags: init-setup
+  
+- name: Ensure sysctl params are set on boot
+  copy:
+    dest: /etc/sysctl.d/k8s.conf
+    content: |
+      net.bridge.bridge-nf-call-iptables = 1
+      net.ipv4.ip_forward = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+    mode: "0644"
+  tags: init-setup
+
+# Install containerd, runc, and CNI plugins
+- name: Download containerd archive
+  get_url:
+    url: "https://github.com/containerd/containerd/releases/download/v{{ containerd_version }}/containerd-{{ containerd_version }}-{{ containerd_arch }}.tar.gz"
+    dest: "/tmp/containerd-{{ containerd_version }}.tar.gz"
+    mode: "0644"
+  tags: containerd
+  
+- name: Extract and install containerd
+  unarchive:
+    src: "/tmp/containerd-{{ containerd_version }}.tar.gz"
+    dest: /usr/local
+    remote_src: yes
+  tags: containerd
+
+- name: Download systemd service file for containerd
+  get_url:
+    url: "https://raw.githubusercontent.com/containerd/containerd/main/containerd.service"
+    dest: /usr/lib/systemd/system/containerd.service
+    mode: "0644"
+  tags: containerd
+  
+- name: Start and enable containerd service
+  systemd:
+    name: containerd
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  tags: containerd
+  
+- name: Ensure /etc/containerd directory exists
+  file:
+    path: /etc/containerd
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: containerd
+  
+- name: Deploy containerd config (with CNI/registry/pause image defaults, SystemdCgroup enabled)
+  template:
+    src: config.toml.j2
+    dest: /etc/containerd/config.toml
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart containerd
+  tags: containerd
+
+- name: Download runc archive
+  get_url:
+    url: "https://github.com/opencontainers/runc/releases/download/v{{ runc_version }}/runc.amd64"
+    dest: /usr/local/sbin/runc
+    mode: "0755"
+  tags: runc
+- name: Verify runc installation
+  command: runc --version
+  register: runc_version
+  changed_when: false
+  tags: runc
+
+- name: Download CNI plugins archive
+  get_url:
+    url: "https://github.com/containernetworking/plugins/releases/download/v{{ cni_version }}/cni-plugins-linux-amd64-v{{ cni_version }}.tgz"
+    dest: /tmp/cni-plugins.tgz
+    mode: "0644"
+  tags: cni
+  
+- name: Ensure /opt/cni/bin directory exists
+  file:
+    path: /opt/cni/bin
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: cni
+  
+- name: Extract and install CNI plugins
+  unarchive:
+    src: /tmp/cni-plugins.tgz
+    dest: /opt/cni/bin
+    remote_src: yes
+  tags: cni
+
+- name: Ensure containerd systemd drop-in directory exists
+  file:
+    path: /etc/systemd/system/containerd.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [containerd, proxy]
+
+- name: Configure containerd proxy (only if enabled)
+  template:
+    src: http-proxy.conf.j2
+    dest: /etc/systemd/system/containerd.service.d/http-proxy.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: common_proxy_enabled | default(false)
+  notify:
+    - Reload systemd daemon
+    - Restart containerd
+  tags: [containerd, proxy]
+
+- name: Remove containerd proxy drop-in (if disabled)
+  file:
+    path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+    state: absent
+  when: not (common_proxy_enabled | default(false))
+  notify:
+    - Reload systemd daemon
+    - Restart containerd
+  tags: [containerd, proxy]
+
+# Install Kubernetes components: kubeadm, kubelet, kubectl
+- name: Ensure /etc/apt/keyrings exists
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: ansible_facts['os_family'] == "Debian"
+  tags: kubernetes
+
+- name: Download Kubernetes GPG key
+  shell: |
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/{{ kubernetes_version }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  tags: kubernetes, step1
+  
+- name: Add Kubernetes apt repository
+  shell: |
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubernetes_version }}/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+  args:
+    creates: /etc/apt/sources.list.d/kubernetes.list
+  tags: kubernetes, step2
+  
+- name: Update apt cache after adding Kubernetes repo
+  apt:
+    update_cache: yes
+  tags: kubernetes, step3
+  
+- name: Install kubelet, kubeadm and kubectl
+  apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    allow_downgrade: yes
+  when: ansible_facts['os_family'] == "Debian"
+  tags: kubernetes, step4
+  
+- name: Hold Kubernetes packages at current version
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+  when: ansible_facts['os_family'] == "Debian"
+  tags: kubernetes
+  
+- name: Enable and start kubelet service
+  systemd:
+    name: kubelet
+    enabled: yes
+    state: started
+  tags: kubernetes

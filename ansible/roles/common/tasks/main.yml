@@ -1,0 +1,21 @@
+---
+- name: Setup proxy
+  ansible.builtin.import_tasks: proxy.yml
+  tags: [common, proxy]
+
+- name: Setup apt-mirror
+  ansible.builtin.import_tasks: apt-mirror.yml
+  tags: [common, apt-mirror]
+
+- name: Setup ntp
+  ansible.builtin.import_tasks: ntp.yml
+  tags: [common, ntp]
+  when: "'ntp' not in group_names"
+
+- name: Setup timezone
+  ansible.builtin.import_tasks: timezone.yml
+  tags: [common, timezone]
+
+- name: Setup dns
+  ansible.builtin.import_tasks: dns.yml
+  tags: [common, dns]

@@ -1,0 +1,4 @@
+[Service]
+Environment="HTTP_PROXY={{ common_proxy_url }}"
+Environment="HTTPS_PROXY={{ common_proxy_url }}"
+Environment="NO_PROXY={{ common_no_proxy | default('') }}"

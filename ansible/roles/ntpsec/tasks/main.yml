@@ -1,0 +1,26 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  tags: ntpsec
+
+- name: Install ntpsec package
+  apt:
+    name: ntpsec
+    state: present
+  tags: ntpsec
+
+- name: Ensure ntpsec service is enabled and started
+  service:
+    name: ntpsec
+    state: started
+    enabled: true
+  tags: ntpsec
+
+- name: Ensure ntpsec is configured correctly
+  template:
+    src: ntpsec.conf.j2
+    dest: /etc/ntpsec/ntpsec.conf
+    mode: '0644'
+  notify: Reload ntpsec
+  tags: ntpsec

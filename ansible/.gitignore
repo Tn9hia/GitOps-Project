@@ -1,6 +1,14 @@
-ansible_structure_annotated.html
+# Ansible Gitignore
+# Local configuration and sensitive data
 .vault_password
+
+# Documentation
+ansible_structure_annotated.html
+
+# Retry files
 *.retry
+
+# Claude AI integration
 .claude
 CLAUDE.md
 /sample

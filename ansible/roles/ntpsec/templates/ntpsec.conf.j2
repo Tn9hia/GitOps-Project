@@ -1,0 +1,26 @@
+# === UPSTREAM NTP SOURCES ===
+# Use Pool VN + Asia
+pool {{ ntp_vietnam_pool[0] }} iburst minpoll 4 maxpoll 8
+pool {{ ntp_vietnam_pool[1] }} iburst
+pool {{ ntp_vietnam_pool[2] }} iburst
+
+# Fallback: Google Public NTP
+server {{ fallback_servers[0] }} iburst prefer
+
+# Required minimum of 3 sources, at least 1 valid source before sync
+tos minclock 3 minsane 1
+
+# === ACCESS CONTROL ===
+# Default: Deny all
+restrict default nomodify notrap nopeer noquery
+
+# Localhost has full rights
+restrict 127.0.0.1
+restrict ::1
+
+# Allow clients in internal network to query and sync, but not modify
+restrict 172.16.10.0 mask 255.255.255.0 nomodify notrap
+
+# === LOGGING ===
+logfile /var/log/ntpsec/ntp.log
+logconfig =syncevents +peerevents +sysevents +allclock

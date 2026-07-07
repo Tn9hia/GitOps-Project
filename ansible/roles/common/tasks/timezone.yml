@@ -1,5 +1,5 @@
+# roles/common/tasks/timezone.yml
 ---
-
 - name: Set system timezone
   community.general.timezone:
-    name: "{{ timezone }}"
+    name: "{{ common_timezone | default('Asia/Ho_Chi_Minh') }}"

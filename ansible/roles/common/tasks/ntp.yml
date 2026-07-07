@@ -1,0 +1,29 @@
+# roles/common/tasks/ntp.yml
+---
+- name: Install chrony
+  apt:
+    name: chrony
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Configure chrony.conf
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart chrony
+
+- name: Ensure chrony enabled and running
+  systemd:
+    name: chrony
+    enabled: yes
+    state: started
+
+- name: Verify time sync status
+  command: chronyc tracking
+  register: chrony_status
+  changed_when: false
+  check_mode: false
