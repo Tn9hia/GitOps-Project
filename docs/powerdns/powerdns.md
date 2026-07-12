@@ -7,7 +7,7 @@ Trong hệ thống, PowerDNS là DNS server duy nhất cho toàn bộ mạng n�
 # Prerequisites
 
 - Ubuntu 24.04
-- User có quyền `sudo`
+- User ubuntu có quyền `sudo`
 - Squid Proxy đã hoạt động — cần để tải package từ PowerDNS official repository
 - Port `53` (DNS) và `443` (DoH) không bị firewall block từ phía client đến PowerDNS server
 

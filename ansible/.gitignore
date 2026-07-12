@@ -12,3 +12,4 @@ ansible_structure_annotated.html
 .claude
 CLAUDE.md
 /sample
+*.txt

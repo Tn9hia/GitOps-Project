@@ -1,0 +1,147 @@
+---
+# Bootstrap the Kubernetes control plane with kubeadm: init the first
+# control-plane node, then join the remaining control-plane nodes.
+# Assumes role: k8s-common already ran (containerd, kubeadm, kubelet, kubectl).
+
+- name: Determine the bootstrap control-plane node
+  set_fact:
+    k8s_bootstrap_host: "{{ groups['k8s_control_plane'][0] }}"
+  tags: k8s-init-cluster
+
+- name: Check whether this node already joined the cluster
+  stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: k8s_kubelet_conf
+  tags: k8s-init-cluster
+
+# --- Bootstrap node: kubeadm init ---------------------------------------
+
+- name: Run kubeadm init on the bootstrap control-plane node
+  command: >-
+    kubeadm init
+    --pod-network-cidr={{ pod_network_cidr }}
+    --service-cidr={{ k8s_service_cidr }}
+    --control-plane-endpoint={{ k8s_control_plane_endpoint }}
+    --upload-certs
+    --apiserver-advertise-address={{ ansible_host }}
+    --kubernetes-version={{ kubernetes_version }}
+    {{ '--dry-run' if k8s_init_dry_run else '' }}
+  register: kubeadm_init_result
+  when:
+    - inventory_hostname == k8s_bootstrap_host
+    - not k8s_kubelet_conf.stat.exists
+  tags: k8s-init-cluster
+
+- name: Set up kubeconfig on the bootstrap node
+  block:
+    - name: Ensure kubeconfig directory exists
+      file:
+        path: "{{ kubeconfig_path | dirname }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0700"
+
+    - name: Copy admin.conf to kubeconfig path
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: "{{ kubeconfig_path }}"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0600"
+        remote_src: true
+  when:
+    - inventory_hostname == k8s_bootstrap_host
+    - not k8s_init_dry_run
+  tags: k8s-init-cluster
+
+# --- Join artifacts, regenerated on every run since the upload-certs key
+#     expires after 2h and the bootstrap token has a TTL as well. ---------
+
+- name: Generate kubeadm join command for worker nodes
+  command: kubeadm token create --print-join-command
+  register: kubeadm_worker_join
+  changed_when: false
+  when:
+    - inventory_hostname == k8s_bootstrap_host
+    - not k8s_init_dry_run
+  tags: k8s-init-cluster
+
+- name: Generate a fresh certificate key for control-plane join
+  command: kubeadm init phase upload-certs --upload-certs
+  register: kubeadm_upload_certs
+  changed_when: false
+  when:
+    - inventory_hostname == k8s_bootstrap_host
+    - not k8s_init_dry_run
+  tags: k8s-init-cluster
+
+- name: Extract certificate key from upload-certs output
+  set_fact:
+    k8s_certificate_key: "{{ kubeadm_upload_certs.stdout_lines[-1] }}"
+  when:
+    - inventory_hostname == k8s_bootstrap_host
+    - not k8s_init_dry_run
+  tags: k8s-init-cluster
+
+- name: Save worker join command on the bootstrap node
+  copy:
+    content: "{{ kubeadm_worker_join.stdout }}\n"
+    dest: "{{ join_token_file }}"
+    mode: "0600"
+  when:
+    - inventory_hostname == k8s_bootstrap_host
+    - not k8s_init_dry_run
+  tags: k8s-init-cluster
+
+- name: Save control-plane join command on the bootstrap node
+  copy:
+    content: >-
+      {{ kubeadm_worker_join.stdout }} --control-plane
+      --certificate-key {{ k8s_certificate_key }}
+      --apiserver-advertise-address=<node-ip>
+      # Replace <node-ip> with the joining node's own ansible_host.
+    dest: "{{ k8s_control_plane_join_file }}"
+    mode: "0600"
+  when:
+    - inventory_hostname == k8s_bootstrap_host
+    - not k8s_init_dry_run
+  tags: k8s-init-cluster
+
+# --- Remaining control-plane nodes: kubeadm join --control-plane --------
+
+- name: Join additional control-plane nodes to the cluster
+  command: >-
+    {{ hostvars[k8s_bootstrap_host].kubeadm_worker_join.stdout }} --control-plane
+    --certificate-key {{ hostvars[k8s_bootstrap_host].k8s_certificate_key }}
+    --apiserver-advertise-address={{ ansible_host }}
+  register: kubeadm_join_result
+  when:
+    - inventory_hostname != k8s_bootstrap_host
+    - not k8s_kubelet_conf.stat.exists
+    - not k8s_init_dry_run
+  tags: k8s-init-cluster
+
+- name: Set up kubeconfig on joined control-plane nodes
+  block:
+    - name: Ensure kubeconfig directory exists
+      file:
+        path: "{{ kubeconfig_path | dirname }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0700"
+
+    - name: Copy admin.conf to kubeconfig path
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: "{{ kubeconfig_path }}"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0600"
+        remote_src: true
+  when:
+    - inventory_hostname != k8s_bootstrap_host
+    - not k8s_init_dry_run
+    - kubeadm_join_result is changed
+  tags: k8s-init-cluster

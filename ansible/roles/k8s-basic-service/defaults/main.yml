@@ -1,0 +1,8 @@
+---
+# helm/kubectl are invoked from the Ansible runner (not the k8s nodes), so we
+# fetch the admin kubeconfig from the bootstrap control-plane node down to the
+# runner first and point helm at the local copies below.
+local_kubeconfig_path: "/tmp/k8s-basic-service-kubeconfig"
+local_cilium_values_path: "/tmp/k8s-basic-service-cilium-values.yaml"
+
+cilium_chart_repo_url: "https://helm.cilium.io/"

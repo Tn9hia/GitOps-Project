@@ -1,3 +1,15 @@
-k8s-controlplane-endpoints: []
-k8s-api-server-port: 6443
-k8s-kubeadm-token: 
+---
+# Endpoint that all nodes/clients use to reach the API server.
+# Points at the HAProxy VIP (see roles/haproxy) load-balancing :6443 across
+# every host in the k8s_control_plane group.
+k8s_control_plane_endpoint: "{{ hostvars['haproxy']['ansible_host'] }}:6443"
+
+k8s_service_cidr: "10.96.0.0/12"
+
+# Set to true to validate the kubeadm init command (kubeadm init --dry-run)
+# without touching the node. No kubeconfig/join artifacts are produced.
+k8s_init_dry_run: false
+
+# Reference file (on the bootstrap node) with the ready-to-use
+# `kubeadm join --control-plane ...` command for the other control-plane nodes.
+k8s_control_plane_join_file: "/tmp/k8s-control-plane-join.sh"

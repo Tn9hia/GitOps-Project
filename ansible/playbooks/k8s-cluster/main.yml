@@ -6,6 +6,22 @@
     - role: k8s-common
   tags: [k8s-common]
 
-# roles/k8s-init-cluster (kubeadm init on the first control-plane node) and
-# roles/k8s-add-worker (kubeadm join) are still empty placeholders and are
-# intentionally not wired in yet.
+- name: Initialize the Kubernetes control plane (kubeadm init + join control-plane nodes)
+  hosts: k8s_control_plane
+  become: true
+  roles:
+    - role: k8s-init-cluster
+  tags: [k8s-init-cluster]
+
+# roles/k8s-add-worker (kubeadm join for worker nodes) is still an empty
+# placeholder and is intentionally not wired in yet.
+
+# Only targets the bootstrap control-plane node: it's the one we fetch the
+# admin kubeconfig from, and helm itself runs from the runner (see
+# roles/k8s-basic-service), so there's no need to hit every control-plane node.
+- name: Install cluster add-ons (Cilium) from the Ansible runner
+  hosts: k8s_control_plane[0]
+  become: true
+  roles:
+    - role: k8s-basic-service
+  tags: [k8s-basic-service]

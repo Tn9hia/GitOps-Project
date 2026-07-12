@@ -1,0 +1,36 @@
+# Install Cilium network plugin
+#
+# helm is run from the Ansible runner against the cluster's API server, not
+# from the k8s nodes, so we first fetch the admin kubeconfig from the
+# bootstrap control-plane node down to the runner.
+
+- name: Fetch admin kubeconfig from the control-plane node to the runner
+  fetch:
+    src: "{{ kubeconfig_path }}"
+    dest: "{{ local_kubeconfig_path }}"
+    flat: true
+  tags: k8s-basic-service
+
+- name: Render Cilium Helm values
+  template:
+    src: cilium-values.yaml.j2
+    dest: "{{ local_cilium_values_path }}"
+  delegate_to: localhost
+  become: false
+  tags: k8s-basic-service
+
+- name: Install Cilium using Helm
+  kubernetes.core.helm:
+    name: cilium
+    chart_ref: cilium
+    chart_repo_url: "{{ cilium_chart_repo_url }}"
+    namespace: kube-system
+    kubeconfig: "{{ local_kubeconfig_path }}"
+    values_files:
+      - "{{ local_cilium_values_path }}"
+    wait: true
+    wait_timeout: 600s
+    update_repo_cache: true
+  delegate_to: localhost
+  become: false
+  tags: k8s-basic-service
