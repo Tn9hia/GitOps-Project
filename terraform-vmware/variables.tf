@@ -80,3 +80,9 @@ variable "vm_password" {
   sensitive   = true
   default = "Okela123!@#"
 }
+
+## GitLab
+variable "gitlab_token" {
+  description = "Personal Access Token for GitLab API"
+  sensitive   = true
+}
