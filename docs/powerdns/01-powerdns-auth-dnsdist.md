@@ -15,18 +15,39 @@
 
 # Diagram
 
-```mermaid
-graph LR
-    A["Client\n(172.16.10.x)"] -->|"53 / 853 (DoT) / 443 (DoH)"| B1["dnsdist\ndns-auth-01"]
-    A -->|"53 / 853 (DoT) / 443 (DoH)"| B2["dnsdist\ndns-auth-02"]
+```d2
+Client: "Client\n(172.16.10.x)" {
+  shape: person
+}
 
-    B1 -->|"round-robin"| C1["pdns-auth\ndns-auth-01:5300"]
-    B1 -->|"round-robin"| C2["pdns-auth\ndns-auth-02:5300"]
-    B2 -->|"round-robin"| C1
-    B2 -->|"round-robin"| C2
+dns-auth-01: "dnsdist\ndns-auth-01" {
+  shape: rectangle
+}
+dns-auth-02: "dnsdist\ndns-auth-02" {
+  shape: rectangle
+}
 
-    C1 --- D[("PostgreSQL\nnghia.internal\ndns-auth-01")]
-    C2 --- D
+pdns-01: "pdns-auth\ndns-auth-01:5300" {
+  shape: rectangle
+}
+pdns-02: "pdns-auth\ndns-auth-02:5300" {
+  shape: rectangle
+}
+
+pg: "PostgreSQL\nnghia.internal\ndns-auth-01" {
+  shape: cylinder
+}
+
+Client -> dns-auth-01: "53 / 853 (DoT) / 443 (DoH)"
+Client -> dns-auth-02: "53 / 853 (DoT) / 443 (DoH)"
+
+dns-auth-01 -> pdns-01: round-robin
+dns-auth-01 -> pdns-02: round-robin
+dns-auth-02 -> pdns-01: round-robin
+dns-auth-02 -> pdns-02: round-robin
+
+pdns-01 -- pg
+pdns-02 -- pg
 ```
 
 ---
