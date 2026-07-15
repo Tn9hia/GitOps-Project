@@ -11,7 +11,7 @@ variable "vcd_pass" {
 
 variable "vcd_org" {
   description = "Organization of Viettel Cloud"
-  sensitive   = false 
+  sensitive   = false
 }
 
 variable "vcd_vdc" {
@@ -79,4 +79,9 @@ variable "vm_password" {
   description = "Password for the VMs"
   sensitive   = true
   default = "Okela123!@#"
+}
+
+variable "gitlab_token" {
+  description = "Token for GitLab API authentication"
+  sensitive   = true
 }
