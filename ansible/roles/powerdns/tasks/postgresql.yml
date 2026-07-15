@@ -1,0 +1,86 @@
+# roles/powerdns/tasks/postgresql.yml
+---
+- name: Install PGDG repo helper
+  ansible.builtin.apt:
+    name: postgresql-common
+    state: present
+
+- name: Run PGDG repo setup script
+  ansible.builtin.command: /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+  args:
+    creates: /etc/apt/sources.list.d/pgdg.list
+
+- name: Install PostgreSQL 18 and psycopg2 (needed by postgresql_* modules)
+  ansible.builtin.apt:
+    name:
+      - postgresql-18
+      - postgresql-contrib-18
+      - python3-psycopg2
+    state: present
+    update_cache: true
+
+- name: Enable and start PostgreSQL
+  ansible.builtin.systemd:
+    name: postgresql
+    enabled: true
+    state: started
+
+- name: Create pdns database user
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    name: "{{ pdns_db_user }}"
+    password: "{{ pdns_db_password }}"
+    state: present
+
+- name: Create pdns database
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{ pdns_db_name }}"
+    owner: "{{ pdns_db_user }}"
+    state: present
+
+- name: Grant privileges on public schema
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    db: "{{ pdns_db_name }}"
+    schema: public
+    role: "{{ pdns_db_user }}"
+    type: schema
+    privs: ALL
+    state: present
+
+- name: Check whether PowerDNS schema is already imported
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_query:
+    db: "{{ pdns_db_name }}"
+    query: "SELECT to_regclass('public.domains') AS exists"
+  register: powerdns_schema_check
+
+- name: Import PowerDNS PostgreSQL schema
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{ pdns_db_name }}"
+    state: restore
+    target: /usr/share/doc/pdns-backend-pgsql/schema.pgsql.sql
+  when: powerdns_schema_check.query_result[0].exists is none
+
+- name: Grant table/sequence privileges after import
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    db: "{{ pdns_db_name }}"
+    schema: public
+    role: "{{ pdns_db_user }}"
+    type: "{{ item }}"
+    objs: ALL_IN_SCHEMA
+    privs: ALL
+    state: present
+  loop:
+    - table
+    - sequence
+  when: powerdns_schema_check.query_result[0].exists is none

@@ -1,0 +1,6 @@
+---
+pdns_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
+
+pdns_db_name: pdns
+pdns_db_user: pdns
+pdns_db_password: "{{ vault_pdns_db_password }}"

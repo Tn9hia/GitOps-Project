@@ -11,7 +11,7 @@
   become: true
   roles:
     - role: powerdns
-  tags: [dns, powerdns]
+  tags: [powerdns]
 
 - name: Configure Squid forward proxy
   hosts: squid
@@ -33,3 +33,10 @@
   roles:
     - role: haproxy
   tags: [haproxy]
+
+- name: Configure apt mirror
+  hosts: apt
+  become: true
+  roles:
+    - role: apt-mirror
+  tags: [apt-mirror]

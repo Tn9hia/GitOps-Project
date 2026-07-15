@@ -1,86 +1,100 @@
 ---
-# Disable systemd-resolve
 - name: Disable systemd-resolved
-  systemd:
+  ansible.builtin.systemd:
     name: systemd-resolved
-    enabled: no
+    enabled: false
     state: stopped
 
 - name: Remove /etc/resolv.conf symlink
-  file:
+  ansible.builtin.file:
     path: /etc/resolv.conf
     state: absent
 
 - name: Create static resolv.conf
-  copy:
+  ansible.builtin.copy:
     dest: /etc/resolv.conf
     content: |
       nameserver 127.0.0.53
       options edns0 trust-ad
     mode: '0644'
 
-- name: Configure PowerDNS Authoritative 5.0 + Recursor 5.4 repos
-  hosts: dns_servers
-  become: true
+- name: Install prerequisites
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg
+    state: present
+    update_cache: true
 
-  vars:
-    pdns_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
+- name: Ensure keyrings dir exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
 
-  tasks:
-    - name: Install prerequisites
-      ansible.builtin.apt:
-        name:
-          - curl
-          - gnupg
-        state: present
-        update_cache: true
+# Same key file, fetched once — reused by both repos
+- name: Download PowerDNS signing key
+  ansible.builtin.get_url:
+    url: "{{ pdns_key_url }}"
+    dest: /etc/apt/keyrings/pdns-pub.asc
+    mode: "0644"
 
-    - name: Ensure keyrings dir exists
-      ansible.builtin.file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: "0755"
+# SEPARATE files — this is the fix for the overwrite bug
+- name: Add Authoritative 5.0 repo
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/pdns-auth.list
+    content: |
+      deb [signed-by=/etc/apt/keyrings/pdns-pub.asc] http://repo.powerdns.com/ubuntu noble-auth-50 main
+    mode: "0644"
 
-    # Same key file, fetched once — reused by both repos
-    - name: Download PowerDNS signing key
-      ansible.builtin.get_url:
-        url: "{{ pdns_key_url }}"
-        dest: /etc/apt/keyrings/pdns-pub.asc
-        mode: "0644"
+- name: Add dnsdist 2.1 repo
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/pdns-dnsdist.list
+    content: |
+      deb [signed-by=/etc/apt/keyrings/pdns-pub.asc] http://repo.powerdns.com/ubuntu noble-dnsdist-21 main
+    mode: "0644"
 
-    # SEPARATE files — this is the fix for the overwrite bug
-    - name: Add Authoritative 5.0 repo
-      ansible.builtin.copy:
-        dest: /etc/apt/sources.list.d/pdns-auth.list
-        content: |
-          deb [signed-by=/etc/apt/keyrings/pdns-pub.asc] http://repo.powerdns.com/ubuntu noble-auth-50 main
-        mode: "0644"
+- name: Pin PowerDNS Authoritative packages
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/pdns-auth
+    content: |
+      Package: pdns-server pdns-backend-*
+      Pin: origin repo.powerdns.com
+      Pin-Priority: 600
+    mode: "0644"
 
-    - name: Add Recursor 5.4 repo
-      ansible.builtin.copy:
-        dest: /etc/apt/sources.list.d/pdns-rec.list
-        content: |
-          deb [signed-by=/etc/apt/keyrings/pdns-pub.asc] http://repo.powerdns.com/ubuntu noble-rec-54 main
-        mode: "0644"
+- name: Pin dnsdist packages
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/pdns-dnsdist
+    content: |
+      Package: dnsdist
+      Pin: origin repo.powerdns.com
+      Pin-Priority: 600
+    mode: "0644"
 
-    - name: Pin PowerDNS Authoritative packages
-      ansible.builtin.copy:
-        dest: /etc/apt/preferences.d/pdns-auth
-        content: |
-          Package: pdns-server pdns-backend-*
-          Pin: origin repo.powerdns.com
-          Pin-Priority: 600
-        mode: "0644"
+- name: Apt update
+  ansible.builtin.apt:
+    update_cache: true
 
-    - name: Pin PowerDNS Recursor packages
-      ansible.builtin.copy:
-        dest: /etc/apt/preferences.d/pdns-rec
-        content: |
-          Package: pdns-recursor
-          Pin: origin repo.powerdns.com
-          Pin-Priority: 600
-        mode: "0644"
+- name: Install PowerDNS Authoritative Server and DNSDist
+  ansible.builtin.apt:
+    name:
+      - pdns-server
+      - pdns-backend-pgsql
+      - dnsdist
+    state: present
 
-    - name: apt update
-      ansible.builtin.apt:
-        update_cache: true
+- name: Install and config PostgreSQL
+  ansible.builtin.include_tasks: postgresql.yml
+
+- name: Configure PowerDNS Authoritative Server
+  ansible.builtin.include_tasks: pdns_config.yml
+
+- name: Enable and start PowerDNS services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - pdns
+    - dnsdist

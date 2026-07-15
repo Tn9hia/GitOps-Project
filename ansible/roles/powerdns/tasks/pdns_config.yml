@@ -1,0 +1,15 @@
+# roles/powerdns/tasks/pdns_config.yml
+---
+- name: Remove default bind.conf backend
+  ansible.builtin.command: mv /etc/powerdns/pdns.d/bind.conf /etc/powerdns/pdns.d/bind.conf.bk
+  args:
+    removes: /etc/powerdns/pdns.d/bind.conf
+
+- name: Deploy pdns.conf
+  ansible.builtin.template:
+    src: pdns.conf.j2
+    dest: /etc/powerdns/pdns.conf
+    owner: root
+    group: pdns
+    mode: "0640"
+  notify: Restart pdns
