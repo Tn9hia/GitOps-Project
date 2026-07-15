@@ -13,7 +13,7 @@ terraform {
     lock_method    = "POST"
     unlock_method  = "DELETE"
     username       = "nghia"
-    password       = var.gitlab_token
+    password       = "glpat-6akM6t7KzeYXM_nMeJoS-m86MQp1OjMH.01.0w0y3w44c"
   }
 }
 
