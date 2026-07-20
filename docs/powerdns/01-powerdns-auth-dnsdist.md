@@ -17,15 +17,15 @@
 
 ```mermaid
 graph LR
-    A["Client\n(172.16.10.x)"] -->|"53 / 853 (DoT) / 443 (DoH)"| B1["dnsdist\ndns-auth-01"]
-    A -->|"53 / 853 (DoT) / 443 (DoH)"| B2["dnsdist\ndns-auth-02"]
+    A["Client (172.16.10.x)"] -->|"53 / 853 (DoT) / 443 (DoH)"| B1["dnsdist dns-auth-01"]
+    A -->|"53 / 853 (DoT) / 443 (DoH)"| B2["dnsdist dns-auth-02"]
 
-    B1 -->|"round-robin"| C1["pdns-auth\ndns-auth-01:5300"]
-    B1 -->|"round-robin"| C2["pdns-auth\ndns-auth-02:5300"]
+    B1 -->|"round-robin"| C1["pdns-auth dns-auth-01:5300"]
+    B1 -->|"round-robin"| C2["pdns-auth dns-auth-02:5300"]
     B2 -->|"round-robin"| C1
     B2 -->|"round-robin"| C2
 
-    C1 --- D[("PostgreSQL\nnghia.internal\ndns-auth-01")]
+    C1 --- D[("PostgreSQL nghia.internal dns-auth-01")]
     C2 --- D
 ```
 
@@ -71,6 +71,10 @@ sudo apt install -y curl gnupg
 sudo install -d /etc/apt/keyrings
 curl https://repo.powerdns.com/FD380FBB-pub.asc | sudo tee /etc/apt/keyrings/auth-51-pub.asc
 curl https://repo.powerdns.com/FD380FBB-pub.asc | sudo tee /etc/apt/keyrings/dnsdist-21-pub.asc
+
+sudo chmod 755 /etc/apt/keyrings
+chmod 644 /etc/apt/keyrings/auth-51-pub.asc /etc/apt/keyrings/dnsdist-21-pub.asc
+sudo chmod 644 /etc/apt/sources.list.d/pdns.list /etc/apt/preferences.d/dnsdist /etc/apt/preferences.d/pdns
 
 sudo tee /etc/apt/sources.list.d/pdns.list <<EOF
 deb [signed-by=/etc/apt/keyrings/auth-51-pub.asc] http://repo.powerdns.com/ubuntu noble-auth-51 main

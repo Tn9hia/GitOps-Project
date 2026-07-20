@@ -1,0 +1,11 @@
+common_proxy_enabled: true
+common_proxy_url: "http://proxy.internal.local:3128"
+common_no_proxy: "localhost,127.0.0.1,10.0.0.0/8,.internal.nghia.local"
+
+# Point every VM's chrony client at the dedicated ntpsec server (role: ntpsec)
+# instead of the role's external-pool default.
+common_ntp_servers:
+  - "{{ hostvars['ntp']['ansible_host'] }}"
+common_dns_servers:
+  - 10.0.0.2
+  - 10.0.0.3
