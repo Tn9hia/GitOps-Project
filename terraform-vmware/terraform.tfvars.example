@@ -1,0 +1,24 @@
+# Example values for Viettel Cloud
+
+# VCD Login credentials
+vcd_user = "<vcd_user>"
+vcd_pass = "<vcd_pass>"
+vcd_org = "<vcd_org>"
+vcd_vdc = "<vcd_vdc>"
+vcd_edgegateway = "<vcd_edgegateway>"
+vcd_url = "<vcd_url>"
+
+# VCD catalog
+catalog_name = "<catalog_name>"
+template_name = "<template_name>"
+storage_policy = "<storage_policy>"
+
+# VM Sizing
+vm_cpus = 2
+vm_memory = 2048
+
+# VM Password
+vm_password = "<vm_password>"
+
+# gitlab_token
+gitlab_token = "<gitlab_token>"

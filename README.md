@@ -1,7 +1,17 @@
-# Air-Gap GitOps Lab — VMware vCloud Director
+# Air-Gap GitOps Lab
 
-> **Mục tiêu:** Xây dựng hạ tầng production-like, hoàn toàn air-gap trên VMware vCloud Director,
-> áp dụng GitOps principles với Kubernetes, IaC, và observability stack đầy đủ.
+> **Mục tiêu:** Xây dựng hạ tầng production-like, hoàn toàn **air-gap**, áp dụng GitOps principles
+> với Kubernetes, IaC, và observability stack đầy đủ — có thể triển khai trên **VMware vCloud Director**
+> hoặc **OpenStack**.
+
+Bài lab tập trung vào việc dựng một môi trường air-gap (kiểm soát toàn bộ outbound traffic) chứ không
+gắn cứng vào một nền tảng ảo hóa cụ thể. Phần provisioning được tách thành hai bộ Terraform độc lập,
+dùng chung một bộ Ansible / ArgoCD / manifests phía sau:
+
+| Thư mục | Nền tảng | Trạng thái |
+|---|---|---|
+| `terraform-vmware/` | VMware vCloud Director (NSX-T) | Đã hoàn thành |
+| `terraform-openstack/` | OpenStack | Đang thực hiện |
 
 ---
 
@@ -9,40 +19,51 @@
 
 | Thuộc tính | Giá trị |
 |---|---|
-| Nền tảng | VMware vCloud Director |
+| Nền tảng | VMware vCloud Director **hoặc** OpenStack |
 | Network model | Air-gap (kiểm soát toàn bộ outbound traffic) |
 | Outbound access | Qua Squid Proxy (whitelist-based) |
 | Deployment model | GitOps — Git is single source of truth |
 | IaC | Terraform (provisioning) + Ansible (configuration) |
 | CD Engine | ArgoCD |
+| OS | Ubuntu 24.04 |
 
 ---
 
-## Network Topology
+## Mô hình air-gap
 
-| Network | Subnet | Gateway | Mục đích |
-|---|---|---|---|
-| Isolated | `172.16.10.0/24` | `172.16.10.254` | Internal — toàn bộ VM nội bộ, không có route ra ngoài |
-| Routed | `192.168.100.0/24` | `192.168.100.254` | Kết nối Edge Gateway, có SNAT rule ra internet |
+Ý tưởng chung không phụ thuộc nền tảng: toàn bộ VM nằm trên một **internal network** không có route
+trực tiếp ra internet. Chỉ có Squid Proxy là điểm duy nhất được phép ra ngoài (qua một **external /
+routed network**), và mọi outbound HTTP/HTTPS đều phải đi qua Squid theo whitelist.
 
 ```
-  172.16.10.0/24 (Isolated)          192.168.100.0/24 (Routed)
-  ┌──────────────────────────┐        ┌─────────────────────────┐
-  │                          │        │                         │
-  │  PowerDNS  NTPSec        │        │                         │
-  │  GitLab    Harbor        │        │      Edge Gateway       │
-  │  Vault     K8s nodes     │        │   (SNAT → Internet)     │
-  │                          │        │                         │
-  │       Squid Proxy ───────┼────────┤  Squid Proxy            │
-  │       172.16.10.12       │        │  192.168.100.x          │
-  │            ▲             │        │                         │
-  └────────────┼─────────────┘        └─────────────────────────┘
-               │
-       HTTP/HTTPS proxy
-       (port 3128)
+        Internal Network (air-gap)                External / Routed Network
+  ┌──────────────────────────────────┐        ┌─────────────────────────────┐
+  │                                  │        │                             │
+  │  PowerDNS   NTPSec   apt-mirror  │        │                             │
+  │  GitLab     Harbor   Vault       │        │        Edge / Router        │
+  │  HAProxy    K8s nodes            │        │      (SNAT → Internet)       │
+  │                                  │        │                             │
+  │        Squid Proxy ──────────────┼────────┤        Squid Proxy          │
+  │        (internal NIC)            │        │        (external NIC)        │
+  │             ▲                    │        │                             │
+  └─────────────┼────────────────────┘        └─────────────────────────────┘
+                │
+        HTTP/HTTPS proxy (port 3128)
 ```
 
-Squid là VM duy nhất có NIC trên cả hai network. Các VM còn lại chỉ nằm trên isolated network và truy cập internet thông qua Squid proxy (HTTP/HTTPS). NTP sync traffic (UDP 123) từ NTPSec đi thẳng qua routed network — không đi qua Squid vì Squid chỉ xử lý HTTP/HTTPS.
+Squid là VM duy nhất có NIC trên cả hai network. Các VM còn lại chỉ nằm trên internal network và truy
+cập internet thông qua Squid proxy (HTTP/HTTPS). Riêng NTP sync traffic (UDP 123) đi thẳng qua routed
+network — không qua Squid vì Squid chỉ xử lý HTTP/HTTPS.
+
+### Quy hoạch network theo nền tảng
+
+| Vai trò | VMware vCloud Director | OpenStack |
+|---|---|---|
+| Internal (air-gap) | `Isolated-Network` — `172.16.10.0/24`, gw `172.16.10.254` | `172.29.25.0/24` (services) + `172.29.27.0/24` (k8s) *(xem `.idea/openstack/planning.md`)* |
+| External / Routed | `Routed-Network` — `192.168.100.0/24`, gw `192.168.100.254` | External network + floating IP |
+
+> Chi tiết quy hoạch IP / domain / VM specs để điền trước khi làm lab:
+> [`.idea/vmware/planning.md`](.idea/vmware/planning.md) và [`.idea/openstack/planning.md`](.idea/openstack/planning.md).
 
 ---
 
@@ -50,7 +71,7 @@ Squid là VM duy nhất có NIC trên cả hai network. Các VM còn lại chỉ
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                        VMware vCloud Director                           │
+│              Virtualization Platform (VMware vCloud / OpenStack)        │
 │                                                                         │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │                    Air-Gap Internal Network                      │   │
@@ -128,7 +149,7 @@ Squid là VM duy nhất có NIC trên cả hai network. Các VM còn lại chỉ
 
 | Component | Role | Notes |
 |---|---|---|
-| **Terraform** | Infrastructure provisioning | Tạo VM, network, storage trên vCloud Director |
+| **Terraform** | Infrastructure provisioning | Hai bộ riêng: `terraform-vmware/` (vCloud) và `terraform-openstack/` |
 | **Atlantis** | GitOps cho Terraform | Plan on PR, Apply on merge, state locking |
 | **Ansible** | Configuration management | Cấu hình OS, deploy non-K8s services |
 
@@ -192,7 +213,7 @@ ArgoCD (watch manifest repo)
 ```
 Engineer
     │
-    │ (VPN → vCloud network)
+    │ (VPN → internal network)
     ▼
 Teleport Proxy
     │
@@ -206,50 +227,52 @@ Teleport Proxy
 ## Repository Structure
 
 ```
-gitops-lab/
-├── terraform/                  # Infrastructure provisioning
-│   ├── environments/
-│   │   ├── dev/
-│   │   └── prod/
-│   └── modules/
-│       ├── vm/
-│       ├── network/
-│       └── storage/
+GitOps/
+├── terraform-vmware/           # Provisioning trên VMware vCloud Director (done)
+│   ├── main.tf                 # Networks + VM modules
+│   ├── provider.tf             # vcd provider + GitLab http backend
+│   ├── modules/vapp/           # Module tạo vApp/VM
+│   └── README.md
 │
-├── ansible/                    # Configuration management
-│   ├── inventory/
-│   ├── group_vars/
-│   ├── host_vars/
-│   └── roles/
-│       ├── squid/
-│       ├── powerdns/
-│       ├── ntpsec/
-│       ├── aptly/
-│       ├── vault/
-│       ├── gitlab/
-│       ├── harbor/
-│       └── teleport/
+├── terraform-openstack/        # Provisioning trên OpenStack (in progress)
+│   ├── main.tf
+│   ├── provider.tf             # openstack provider
+│   └── modules/instance/
 │
-├── kubernetes/                 # K8s manifests
-│   ├── base/
-│   └── overlays/
-│       ├── dev/
-│       └── prod/
+├── ansible/                    # Configuration management (dùng chung)
+│   ├── inventories/
+│   │   ├── prod/
+│   │   └── uat/
+│   ├── roles/                  # squid, powerdns, ntpsec, gitlab, haproxy, k8s...
+│   ├── playbooks/
+│   └── site.yaml
 │
-├── helm/                       # Helm charts / Helmfile
-│   └── helmfile.yaml
+├── argocd/                     # GitOps CD — apps, charts, helm-values, kustomize
+│   ├── apps/                   # cilium, longhorn, traefik...
+│   ├── bootstrap/              # root-app (app-of-apps)
+│   └── helm-values/
 │
-└── docs/                       # Documentation & diagrams
-    ├── diagrams/               # D2lang diagram sources
-    └── runbooks/
+├── docs/                       # Documentation & diagrams
+│   └── docs/diagrams/          # D2lang diagram sources
+│
+└── .idea/                      # Planning cho bài lab (tách theo nền tảng)
+    ├── vmware/
+    │   └── planning.md         # Quy hoạch IP / domain / VM specs — VMware
+    └── openstack/
+        ├── planning.md         # Quy hoạch IP / domain / VM specs — OpenStack
+        └── master-plan.md      # Working notes & task tracking
 ```
 
 ---
 
 ## Deployment Phases
 
+### Phase 0 — Planning
+- [ ] Chọn nền tảng: `terraform-vmware/` hoặc `terraform-openstack/`
+- [ ] Điền quy hoạch IP / domain / network / VM specs trong `.idea/vmware/planning.md` hoặc `.idea/openstack/planning.md`
+
 ### Phase 1 — Foundation (Basic Services)
-- [ ] Provision VMs với Terraform trên vCloud Director
+- [ ] Provision VMs với Terraform (VMware hoặc OpenStack)
 - [ ] Cấu hình Squid Proxy (outbound control)
 - [ ] Deploy PowerDNS (internal DNS)
 - [ ] Deploy NTPSec (time sync)
@@ -262,7 +285,7 @@ gitops-lab/
 - [ ] Deploy Teleport (access management)
 
 ### Phase 3 — Kubernetes
-- [ ] Provision K8s cluster (kubeadm hoặc Terraform)
+- [ ] Provision K8s cluster (kubeadm)
 - [ ] Install Cilium CNI
 - [ ] Install Longhorn CSI
 - [ ] Deploy Traefik Ingress + HAProxy LB
@@ -295,14 +318,17 @@ gitops-lab/
 
 ## Prerequisites
 
-- VMware vCloud Director API access
+- Truy cập API của nền tảng đích:
+  - VMware vCloud Director API access, **hoặc**
+  - OpenStack API access (Keystone auth URL, tenant/project)
 - Terraform >= 1.6
 - Ansible >= 2.15
 - kubectl, helm, helmfile
-- VPN access vào vCloud network
-- OS: Ubuntu24.04
+- VPN access vào internal network
+- OS: Ubuntu 24.04
 
 ---
 
-> **Note:** 
-> Diagram chi tiết từng layer xem tại `docs/diagrams/` (D2lang format).
+> **Note:**
+> - Provisioning chi tiết theo nền tảng: [`terraform-vmware/README.md`](terraform-vmware/README.md) và `terraform-openstack/`.
+> - Diagram chi tiết từng layer xem tại `docs/docs/diagrams/` (D2lang format).

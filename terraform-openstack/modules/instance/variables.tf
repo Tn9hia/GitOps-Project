@@ -30,7 +30,7 @@ variable "vm_key_pair" {
 
 variable "vm_security_groups" {
   type = list(string)
-  default = [pfSense-curt]
+  default = ["pfSense-curt"]
   description = "List of security group names to assign to the VM"
 }
 

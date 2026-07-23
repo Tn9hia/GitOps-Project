@@ -9,22 +9,18 @@
 *.tfstate
 *.tfstate.backup
 *.tfvars
-.env
-CLAUDE.md
-master-plan.md
 
-# Obsidian
-.makemd
-icons
-.obsidian
-.space
-.makemd
-.ansible
-plugins
-snippets
-Tags
-themes
+.idea/
 
-# weekly report
-weekly-report/
-*.pdf
+# Local Terraform state
+terraform.tfvars
+terraform.tfvars.json
+*.tfvars.auto.tfvars
+*.auto.tfvars
+
+# Local variables
+terraform.tfvars.local
+terraform.tfvars.local.json
+
+# Ansible
+*.retry
