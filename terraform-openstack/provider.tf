@@ -1,6 +1,6 @@
 # Define required providers
 terraform {
-required_version = ">= 0.14.0"
+  required_version = ">= 0.14.0"
   required_providers {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
@@ -16,4 +16,7 @@ provider "openstack" {
   password    = var.ops_password
   auth_url    = var.ops_auth_url
   region      = var.ops_region
+  user_domain_name    = var.ops_user_domain_name     # lấy từ openrc
+  project_domain_name = var.ops_project_domain_name  # lấy từ openrc
+  insecure    = true
 }
