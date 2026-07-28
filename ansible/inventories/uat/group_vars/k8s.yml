@@ -1,0 +1,18 @@
+---
+# Variables shared by every play/role that targets the k8s group
+# (k8-prepare-node, k8s-init-cluster, k8s-add-worker, k8s-basic-service),
+# so they need to live here rather than in a single role's defaults.
+
+containerd_version: "2.2.0"
+containerd_arch: "linux-amd64"
+cni_version: "1.8.0"
+cni_arch: "linux-amd64"
+kubernetes_version: "v1.34"
+runc_version: "1.1.15"
+runc_arch: "linux-amd64"
+kubernetes_keyring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+kubernetes_repo_file: "/etc/apt/sources.list.d/kubernetes.list"
+pod_network_cidr: "10.244.0.0/16"
+join_token_file: "/tmp/k8s-join-token"
+ca_cert_hash_file: "/tmp/k8s-ca-cert-hash"
+kubeconfig_path: "/home/ubuntu/.kube/config"

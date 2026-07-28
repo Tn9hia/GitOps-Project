@@ -1,19 +1,8 @@
 ---
-# Variables for all nodes
-
-containerd_version: "2.2.0"
-containerd_arch: "linux-amd64"
-cni_version: "1.8.0"
-cni_arch: "linux-amd64"
-kubernetes_version: "v1.34"
-runc_version: "1.1.15"
-runc_arch: "linux-amd64"
-kubernetes_keyring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
-kubernetes_repo_file: "/etc/apt/sources.list.d/kubernetes.list"
-pod_network_cidr: "10.244.0.0/16" 
-join_token_file: "/tmp/k8s-join-token"
-ca_cert_hash_file: "/tmp/k8s-ca-cert-hash"
-kubeconfig_path: "/home/ubuntu/.kube/config"
+# Variables shared across k8s roles/plays (containerd/runc/cni versions,
+# pod_network_cidr, kubeconfig_path, join_token_file, ...) now live in
+# group_vars/k8s.yml, since k8s-init-cluster and other roles need them too
+# and role defaults don't carry over across separate plays.
 
 # Proxy for containerd (shared with role: common)
 common_proxy_enabled: false

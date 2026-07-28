@@ -3,8 +3,8 @@
   hosts: k8s
   become: true
   roles:
-    - role: k8s-common
-  tags: [k8s-common]
+    - role: k8-prepare-node
+  tags: [k8-prepare-node]
 
 - name: Initialize the Kubernetes control plane (kubeadm init + join control-plane nodes)
   hosts: k8s_control_plane

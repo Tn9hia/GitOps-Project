@@ -1,7 +1,7 @@
 ---
 # Bootstrap the Kubernetes control plane with kubeadm: init the first
 # control-plane node, then join the remaining control-plane nodes.
-# Assumes role: k8s-common already ran (containerd, kubeadm, kubelet, kubectl).
+# Assumes role: k8-prepare-node already ran (containerd, kubeadm, kubelet, kubectl).
 
 - name: Determine the bootstrap control-plane node
   set_fact:

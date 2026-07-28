@@ -36,8 +36,8 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_rule_1" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
-  port_range_min    = 1
-  port_range_max    = 65535
+  port_range_min    = 0
+  port_range_max    = 0
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.default-sg.id
 }
@@ -71,7 +71,7 @@ module "vm_services" {
       boot_index            = -1
       volume_type           = "STANDARD"
       delete_on_termination = true
-    },    
+    },
   ]
 
   vm_networks = [
@@ -107,11 +107,11 @@ module "gitlab" {
     {
       source_type           = "image"
       destination_type      = "volume"
-      volume_size           = 30
+      volume_size           = 50
       boot_index            = 0
       volume_type           = "STANDARD"
       delete_on_termination = true
-    },  
+    },
   ]
 
   vm_networks = [
@@ -122,3 +122,72 @@ module "gitlab" {
   ]
 }
 
+# Create Kubernetes control plane
+module "k8s_controlplane" {
+  source               = "./modules/instance"
+  vm_name              = "balck-03"
+  vm_availability_zone = "AZ-01"
+  vm_image_name        = "Ubuntu-24.04-CIS"
+  vm_flavor_name       = "c1.medium"
+  vm_key_pair          = "balck"
+  vm_security_groups   = [openstack_networking_secgroup_v2.default-sg.name]
+  vm_metadata          = {}
+
+  vm_block_devices = [
+    {
+      source_type           = "image"
+      destination_type      = "volume"
+      volume_size           = 50
+      boot_index            = 0
+      volume_type           = "STANDARD"
+      delete_on_termination = true
+    },
+  ]
+
+  vm_networks = [
+    {
+      uuid        = openstack_networking_network_v2.private_network.id
+      fixed_ip_v4 = "172.16.5.12"
+    },
+  ]
+}
+
+# Create Kubernetes worker nodes
+variable "k8s_worker" {
+  type = map(object({
+    ip = string
+  }))
+  default = {
+    "balck-04" = { ip   = "172.16.5.13" }
+    "balck-05" = { ip   = "172.16.5.14" }
+    "balck-06" = { ip   = "172.16.5.15" }
+  }
+}
+
+module "k8s_worker" {
+  source = "./modules/instance"
+  for_each = var.k8s_worker
+  vm_name              = each.key
+  vm_availability_zone = "AZ-01"
+  vm_image_name        = "Ubuntu-24.04-CIS"
+  vm_flavor_name       = "c1.large"
+  vm_key_pair          = "balck"
+  vm_security_groups   = [openstack_networking_secgroup_v2.default-sg.name]
+  vm_metadata          = {}
+  vm_block_devices = [
+    {
+      source_type           = "image"
+      destination_type      = "volume"
+      volume_size           = 100
+      boot_index            = 0
+      volume_type           = "STANDARD"
+      delete_on_termination = true
+    },
+  ]
+  vm_networks = [
+    {
+      uuid        = openstack_networking_network_v2.private_network.id
+      fixed_ip_v4 = each.value.ip
+    },
+  ]
+}
