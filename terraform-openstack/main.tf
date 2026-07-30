@@ -35,7 +35,7 @@ resource "openstack_networking_secgroup_v2" "default-sg" {
 resource "openstack_networking_secgroup_rule_v2" "secgroup_rule_1" {
   direction         = "ingress"
   ethertype         = "IPv4"
-  protocol          = "tcp"
+  protocol          = ""
   port_range_min    = 0
   port_range_max    = 0
   remote_ip_prefix  = "0.0.0.0/0"

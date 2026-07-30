@@ -4,19 +4,19 @@
 .PHONY: ping deploy-prod deploy-staging lint check-prod
 
 ping:
-  ansible all -m ping -i inventories/production/hosts.yml
+	ansible all -m ping -i inventories/prod/hosts.yml
 
 deploy-prod:
-  ansible-playbook playbooks/site.yml -i inventories/production/hosts.yml
+	ansible-playbook playbooks/site.yml -i inventories/prod/hosts.yml
 
 lint:
-  ansible-lint playbooks/ roles/
+	ansible-lint playbooks/ roles/
 
 check-prod:
-  ansible-playbook playbooks/site.yml -i inventories/production/hosts.yml --check --diff
+	ansible-playbook playbooks/site.yml -i inventories/production/hosts.yml --check --diff
 
-  # dry-run trước
-ansible-playbook site.yaml --limit ntp --tags prepare-vm --check --diff
+# dry-run trước
+# ansible-playbook site.yaml --limit ntp --tags prepare-vm --check --diff
 # chạy thật
 # ansible-playbook site.yaml --limit ntp --tags prepare-vm
 # ansible-playbook site.yaml --limit ntp --tags ntpsec --check --diff
