@@ -2,6 +2,7 @@
 - name: Update apt cache
   apt:
     update_cache: yes
+    
 - name: Add gitlab package repository
   shell: |
     curl --location "https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh" | sudo bash

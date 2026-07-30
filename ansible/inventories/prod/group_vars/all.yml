@@ -1,11 +1,21 @@
+# Prepare VM/OS before installing services
+# VM Proxy
 common_proxy_enabled: true
 common_proxy_url: "http://proxy.internal.local:3128"
-common_no_proxy: "localhost,127.0.0.1,10.0.0.0/8,.internal.nghia.local"
+common_no_proxy: "localhost,127.0.0.1,10.0.0.0/8,.internal.local"
 
-# Point every VM's chrony client at the dedicated ntpsec server (role: ntpsec)
-# instead of the role's external-pool default.
+# VM DNS
+common_dns_servers:
+  - "{{ hostvars['dns-01']['ansible_host'] }}"
+
+# VM NTP
 common_ntp_servers:
   - "{{ hostvars['ntp']['ansible_host'] }}"
-common_dns_servers:
-  - 10.0.0.2
-  - 10.0.0.3
+
+# Install NTPSec
+ntp_vietnam_pool:
+  - "172.29.25.1"
+  - "172.29.25.2"
+  - "172.29.25.2"
+fallback_servers:
+  - "172.29.25.2"

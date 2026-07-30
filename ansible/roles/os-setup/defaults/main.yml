@@ -2,11 +2,11 @@ common_dns_servers:
   - 10.0.0.2
   - 10.0.0.3
 common_dns_fallback: "1.1.1.1 8.8.8.8"
-common_dns_search_domain: "dns.nghia.internal"
+common_dns_search_domain: "dns.internal.local"
 common_ntp_servers:
   - 10.0.0.10
   - 10.0.0.11
 
 common_proxy_enabled: false
 common_proxy_url: "http://proxy.internal.local:3128"
-common_no_proxy: "localhost,127.0.0.1,10.0.0.0/8,.internal.nghia.local"
+common_no_proxy: "localhost,127.0.0.1,10.0.0.0/8,.internal.local"

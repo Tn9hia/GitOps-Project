@@ -1,8 +1,21 @@
 # Ansible tasks for common setup on all Kubernetes nodes
+- name: Get current hostname
+  ansible.builtin.command: hostname
+  register: current_hostname
+  changed_when: false
+  tags: init-setup
 
-# Update and upgrade the system
+- name: Update 127.0.1.1 entry in /etc/hosts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1\s+'
+    line: "127.0.1.1 {{ inventory_hostname }}"
+    insertafter: '^127\.0\.1\.1'
+    state: present
+  tags: init-setup
+
 - name: Set hostname
-  hostname:
+  ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
   tags: init-setup
 
@@ -80,7 +93,7 @@
   loop:
     - { name: "net.bridge.bridge-nf-call-iptables", value: 1 }
     - { name: "net.ipv4.ip_forward", value: 1 }
-    - { name: "net.bridge.bridge-nf-call-ip6tables", value: 1 }
+    # - { name: "net.bridge.bridge-nf-call-ip6tables", value: 1 }
   tags: init-setup
   
 - name: Ensure sysctl params are set on boot

@@ -3,10 +3,6 @@
   ansible.builtin.import_tasks: proxy.yml
   tags: [common, proxy]
 
-- name: Setup apt-mirror
-  ansible.builtin.import_tasks: apt-mirror.yml
-  tags: [common, apt-mirror]
-
 - name: Setup ntp
   ansible.builtin.import_tasks: ntp.yml
   tags: [common, ntp]
@@ -19,3 +15,8 @@
 - name: Setup dns
   ansible.builtin.import_tasks: dns.yml
   tags: [common, dns]
+
+
+- name: Setup apt-mirror
+  ansible.builtin.import_tasks: apt-mirror.yml
+  tags: [common, apt-mirror]

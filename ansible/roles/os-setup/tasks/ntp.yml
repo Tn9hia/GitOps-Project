@@ -7,6 +7,18 @@
     update_cache: yes
     cache_valid_time: 3600
 
+- name: Disable systemd-timesyncd
+  systemd:
+    name: systemd-timesyncd
+    enabled: no
+    state: stopped
+  ignore_errors: yes
+
+- name: Unmask chrony
+  systemd:
+    name: chrony
+    masked: no
+
 - name: Configure chrony.conf
   template:
     src: chrony.conf.j2

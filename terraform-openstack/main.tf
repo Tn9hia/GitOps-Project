@@ -191,3 +191,32 @@ module "k8s_worker" {
     },
   ]
 }
+
+# FRRouting as BGP router
+module "frr_bgp" {
+  source = "./modules/instance"
+  vm_name              = "balck-bgp"
+  vm_availability_zone = "AZ-01"
+  vm_image_name        = "Ubuntu-24.04-CIS"
+  vm_flavor_name       = "c1.medium"
+  vm_key_pair          = "balck"
+  vm_security_groups   = [openstack_networking_secgroup_v2.default-sg.name]
+  vm_metadata          = {}
+  vm_block_devices = [
+    {
+      source_type           = "image"
+      destination_type      = "volume"
+      volume_size           = 20
+      boot_index            = 0
+      volume_type           = "STANDARD"
+      delete_on_termination = true
+    },
+  ]
+
+  vm_networks = [
+    {
+      uuid        = openstack_networking_network_v2.private_network.id
+      fixed_ip_v4 = "172.16.5.16"
+    },
+  ]
+}
