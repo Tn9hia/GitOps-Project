@@ -1,0 +1,157 @@
+---
+# Temporary disabled install from aptly repository cuz different gpg key.
+# - name: Update apt cache
+#   apt:
+#     update_cache: yes
+
+# - name: Add aptly GPG key
+#   ansible.builtin.get_url:
+#     url: https://www.aptly.info/pubkey.txt
+#     dest: /etc/apt/keyrings/aptly.asc
+#     mode: '0644'
+
+# - name: Add aptly repository
+#   apt_repository:
+#     repo: "deb [signed-by=/etc/apt/keyrings/aptly.asc] http://repo.aptly.info/release noble main" 
+#     filename: aptly
+#     state: present
+#     update_cache: yes
+
+- name: Install aptly
+  apt:
+    name: 
+    - aptly
+    - aptly-api
+    - nginx
+    state: present
+    update_cache: yes
+
+# Create aptly root directory and grant ownership to aptly user
+# - name: Create aptly user
+#   user:
+#     name: "{{ aptly_user }}"
+#     home: "{{ aptly_home }}"
+#     shell: "/bin/bash"
+#     create_home: false
+#     system: true
+#     state: present
+
+- name: Create aptly root directory
+  file:
+    path: "{{ aptly_root_dir }}"
+    state: directory
+    owner: "{{ aptly_user }}"
+    group: "{{ aptly_user }}"
+    mode: "0755"
+  tags:
+    - bootstrap
+
+# GPG signing key
+# - name: Check if GPG signing key already exists
+#   command: "gpg --list-secret-keys {{ gpg_key_email }}"
+#   register: gpg_key_check
+#   failed_when: false
+#   changed_when: false
+#   tags:
+#     - bootstrap
+
+# - name: Generate GPG signing key
+#   become_user: "{{ aptly_user }}"
+#   when: gpg_key_check.rc != 0
+#   tags: 
+#     - bootstrap
+#   block:
+#     - name: Write GPG batch key-gen config
+#       copy:
+#         dest: "/tmp/gpg-genkey-{{ aptly_user }}.conf"
+#         content: |
+#           %no-protection
+#           Key-Type: RSA
+#           Key-Length: 4096
+#           Name-Real: {{ gpg_key_name }}
+#           Name-Email: {{ gpg_key_email }}
+#           Expire-Date: 1y
+#           %commit
+#         mode: "0600"
+
+#     - name: Generate key from batch config
+#       command: "gpg --batch --generate-key /tmp/gpg-genkey-{{ aptly_user }}.conf"
+
+#     - name: Remove batch config (contains no secrets but tidy up)
+#       file:
+#         path: "/tmp/gpg-genkey-{{ aptly_user }}.conf"
+#         state: absent
+
+#     - name: Export GPG public key
+#       become_user: "{{ aptly_user }}"
+#       shell: "gpg --export -a {{ gpg_key_email }} > {{ aptly_home }}/repo-public.gpg"
+#       args:
+#         creates: "{{ aptly_home }}/repo-public.gpg"
+ 
+#     - name: Fetch public key to control node (to distribute to clients later)
+#       fetch:
+#         src: "{{ aptly_home }}/repo-public.gpg"
+#         dest: "./files/repo-public.gpg"
+#         flat: true
+
+# - name: Import upstream GPG key
+#   become_user: "{{ aptly_user }}"
+#   shell: "gpg --keyserver keyserver.ubuntu.com --recv-keys {{ item.gpg_key_id }}"
+#   loop: "{{ aptly_mirror_name }}"
+
+
+# Configure aptly
+- name: Create aptly config directory
+  file:
+    path: "/etc/aptly"
+    state: directory
+    mode: "0755"
+    owner: "{{ aptly_user }}"
+    group: "{{ aptly_user }}"
+  tags:
+    - bootstrap
+
+- name: Configure aptly
+  template:
+    src: aptly.conf.j2
+    dest: /etc/aptly/aptly.conf
+  tags:
+    - bootstrap
+
+# # - name: Aptly create mirror
+# #   become_user: "{{ aptly_user }}"
+# #   shell: "aptly mirror create {{ item.name }} {{ item.url }} {{ item.distribution }} {{ item.components.split(',') | join(' ') }}"
+# #   loop: "{{ aptly_mirror_name }}"
+# #   tags:
+# #     - bootstrap
+# #     - create-mirror
+
+# # - name: Aptly update mirror
+# #   become_user: "{{ aptly_user }}"
+# #   shell: "aptly mirror update {{ item.name }}"
+# #   loop: "{{ aptly_mirror_name }}"
+# #   tags:
+# #     - bootstrap
+# #     - update-mirror
+
+# # - name: Aptly snapshot
+# #   become_user: "{{ aptly_user }}"
+# #   shell: "aptly snapshot create {{ item.name }} from mirror {{ item.name }}"
+# #   loop: "{{ aptly_mirror_name }}"
+# #   tags:
+# #     - bootstrap
+
+
+# # - name: Aptly publish snapshot
+# #   become_user: "{{ aptly_user }}"
+# #   shell: "aptly publish snapshot -distribution {{ item.distribution }} {{ item.name }}"
+# #   loop: "{{ aptly_mirror_name }}"
+# #   tags:
+# #     - bootstrap
+# #     - publish-snapshot
+
+# # Setup nginx to serve aptly
+
+- name: Setup nginx
+  ansible.builtin.import_tasks: nginx.yml
+  tags: [aptly, nginx, bootstrap]

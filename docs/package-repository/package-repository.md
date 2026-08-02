@@ -52,12 +52,12 @@ sudo apt install -y gnupg curl nginx
 
 ```shell
 curl -fsSL https://www.aptly.info/pubkey.txt \
-  | sudo gpg --dearmor -o /etc/apt/keyrings/aptly.gpg
+  | sudo gpg --dearmor -o /etc/apt/keyrings/aptly.asc
 
-echo "deb [signed-by=/etc/apt/keyrings/aptly.gpg] http://repo.aptly.info/ squeeze main" \
+echo "deb [signed-by=/etc/apt/keyrings/aptly.asc] http://repo.aptly.info/release noble main" \
   | sudo tee /etc/apt/sources.list.d/aptly.list
 
-sudo apt update && sudo apt install -y aptly
+sudo apt update && sudo apt install -y aptly aptly-api
 
 aptly version
 ```
@@ -201,18 +201,22 @@ gpg --export --armor apt-mirror@nghia.internal \
 gpg --no-default-keyring --keyring trustedkeys.gpg \
   --keyserver keyserver.ubuntu.com \
   --recv-keys 871920D1991BC93C 3B4FE6ACC0B21F32
+# Hoặc
+# Import GPG key của Ubuntu từ keyserver không bị ratelimit
+curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x871920D1991BC93C" \
+  | gpg --no-default-keyring --keyring trustedkeys.gpg --import
 
 # Tạo mirror
 aptly mirror create ubuntu-noble-main \
-  http://archive.ubuntu.com/ubuntu noble \
+  https://archive.ubuntu.com/ubuntu noble \
   main restricted universe multiverse
 
 aptly mirror create ubuntu-noble-security \
-  http://security.ubuntu.com/ubuntu noble-security \
+  https://security.ubuntu.com/ubuntu noble-security \
   main restricted universe multiverse
 
 aptly mirror create ubuntu-noble-updates \
-  http://archive.ubuntu.com/ubuntu noble-updates \
+  https://archive.ubuntu.com/ubuntu noble-updates \
   main restricted universe multiverse
 ```
 

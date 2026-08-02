@@ -12,10 +12,4 @@ common_dns_servers:
 common_ntp_servers:
   - "{{ hostvars['ntp']['ansible_host'] }}"
 
-# Install NTPSec
-ntp_vietnam_pool:
-  - "172.29.25.1"
-  - "172.29.25.2"
-  - "172.29.25.2"
-fallback_servers:
-  - "172.29.25.2"
+

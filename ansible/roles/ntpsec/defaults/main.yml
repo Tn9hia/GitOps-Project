@@ -1,6 +1,9 @@
-ntp_vietnam_pool: # required 3 ntp sources
+ntp_vietnam_pool: # required at least 3 ntp sources
   - "vn.pool.ntp.org"
   - "0.asia.pool.ntp.org"
   - "1.asia.pool.ntp.org"
-fallback_servers:
+ntp_fallback_servers:
   - "time.google.com"
+ntp_allow_subnets:
+  - subnet: "172.16.1.0"
+    mask: "255.255.255.0"

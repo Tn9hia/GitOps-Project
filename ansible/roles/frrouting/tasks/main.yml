@@ -1,0 +1,40 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Add ffrouting GPG key
+  ansible.builtin.get_url:
+    url: https://deb.frrouting.org/frr/keys.gpg
+    dest: /usr/share/keyrings/frrouting.gpg
+    mode: '0644'
+
+- name: Add FRRouting repository
+  ansible.builtin.deb822_repository:
+    name: frr
+    types: deb
+    uris: https://deb.frrouting.org/frr
+    suites: "{{ ansible_distribution_release }}"
+    components: "{{ frr_version }}"
+    signed_by: /usr/share/keyrings/frrouting.gpg
+    state: present
+  register: frr_repo
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+  when: frr_repo.changed
+
+- name: Install FRR packages
+  ansible.builtin.apt:
+    name:
+      - frr
+      - frr-pythontools
+    state: present
+
+- name: Configure FRR
+  ansible.builtin.template:
+    src: daemons.j2
+    dest: /etc/frr/daemons
+    mode: '0644'
+  notify: Restart FRR

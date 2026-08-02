@@ -1,11 +1,12 @@
 # === UPSTREAM NTP SOURCES ===
-# Use Pool VN + Asia
-pool {{ ntp_vietnam_pool[0] }} iburst minpoll 4 maxpoll 8
-pool {{ ntp_vietnam_pool[1] }} iburst
-pool {{ ntp_vietnam_pool[2] }} iburst
+{% for src in ntp_vietnam_pool %}
+pool {{ src }} iburst{{ ' minpoll 4 maxpoll 8' if loop.first else '' }}
+{% endfor %}
 
-# Fallback: Google Public NTP
-server {{ fallback_servers[0] }} iburst prefer
+{% for srv in ntp_fallback_servers %}
+server {{ srv }} iburst prefer
+{% endfor %}
+
 
 # Required minimum of 3 sources, at least 1 valid source before sync
 tos minclock 3 minsane 1
@@ -20,6 +21,11 @@ restrict ::1
 
 # Allow clients in internal network to query and sync, but not modify
 restrict 172.16.10.0 mask 255.255.255.0 nomodify notrap
+
+{% for subnet in ntp_allow_subnets %}
+restrict {{ subnet.subnet }} mask {{ subnet.mask }} nomodify notrap
+{% endfor %}
+
 
 # === LOGGING ===
 logfile /var/log/ntpsec/ntp.log

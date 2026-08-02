@@ -13,6 +13,13 @@
     - role: powerdns
   tags: [powerdns]
 
+- name: Configure apt mirror
+  hosts: apt_repo
+  become: true
+  roles:
+    - role: apt-repo
+  tags: [apt-repo]
+
 - name: Configure Squid forward proxy
   hosts: squid
   become: true
@@ -34,9 +41,9 @@
     - role: haproxy
   tags: [haproxy]
 
-- name: Configure apt mirror
-  hosts: apt
+- name: Configure Frrouting
+  hosts: frrouting
   become: true
   roles:
-    - role: apt-mirror
-  tags: [apt-mirror]
+    - role: frrouting
+  tags: [ffrouting]

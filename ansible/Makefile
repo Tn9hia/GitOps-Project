@@ -6,21 +6,29 @@
 ping:
 	ansible all -m ping -i inventories/prod/hosts.yml
 
+check-prod:
+	ansible-playbook site.yml -i inventories/prod/hosts.yml --check --diff
+
 deploy-prod:
-	ansible-playbook playbooks/site.yml -i inventories/prod/hosts.yml
+	ansible-playbook site.yml -i inventories/prod/hosts.yml
 
 lint:
 	ansible-lint playbooks/ roles/
 
-check-prod:
-	ansible-playbook playbooks/site.yml -i inventories/production/hosts.yml --check --diff
+prepare-vm:
+	ansible-playbook site.yml -i inventories/prod/hosts.yml --tags prepare-vm
 
-# dry-run trước
-# ansible-playbook site.yaml --limit ntp --tags prepare-vm --check --diff
-# chạy thật
-# ansible-playbook site.yaml --limit ntp --tags prepare-vm
-# ansible-playbook site.yaml --limit ntp --tags ntpsec --check --diff
-# ansible-playbook site.yaml --limit ntp --tags ntpsec
+deploy-ntpsec:
+	ansible-playbook site.yml -i inventories/prod/hosts.yml --limit ntp-servers --tags ntpsec
+
+deploy-apt-repo:
+	ansible-playbook site.yml -i inventories/prod/hosts.yml --limit apt-repo --tags apt-repo
+
+deploy-gitlab:
+	ansible-playbook site.yml -i inventories/prod/hosts.yml --limit gitlab --tags gitlab
+
+deploy-ffrouting:
+	ansible-playbook site.yml -i inventories/prod/hosts.yml --limit ffrouting --tags ffrouting
 
 # ansible-playbook site.yaml --limit dns --tags dns --check --diff
 # ansible-playbook site.yaml --limit dns --tags dns

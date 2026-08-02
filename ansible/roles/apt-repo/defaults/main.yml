@@ -1,0 +1,22 @@
+aptly_user: "aptly"
+aptly_home: "/etc/aptly"
+aptly_root_dir: "/data/aptly"
+
+# GPG signing key
+gpg_key_name: "abc"
+gpg_key_email: "abc@gmail.com"
+
+aptly_mirror_name:
+  - name: "ubuntu"
+    url: "http://archive.ubuntu.com/ubuntu/"
+    distribution: "noble"
+    components: "main,universe"
+    # Ubuntu Archive Automatic Signing Key (2018) <ftpmaster@ubuntu.com>
+    # Verify against https://ubuntu.com/security/gpg before trusting.
+    gpg_key_id: "F6ECB3762474EDA9D21B7022871920D1991BC93"
+
+# nginx
+aptly_ssl_certificate_src: "{{ playbook_dir }}/ssl/fullchain.pem"
+aptly_ssl_certificate_key_src: "{{ playbook_dir }}/ssl/privkey.pem"
+aptly_ssl_certificate: "/etc/nginx/ssl/gitlab.crt"
+aptly_ssl_certificate_key: "/etc/nginx/ssl/gitlab.key"

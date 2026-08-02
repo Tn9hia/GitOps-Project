@@ -1,7 +1,7 @@
 ---
 - name: Prepare Ubuntu VM
   hosts: all
-  become: yes
+  become: true
   roles:
     - role: os-setup
   tags:

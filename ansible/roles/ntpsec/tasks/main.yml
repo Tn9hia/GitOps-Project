@@ -20,7 +20,7 @@
 - name: Ensure ntpsec is configured correctly
   template:
     src: ntpsec.conf.j2
-    dest: /etc/ntpsec/ntpsec.conf
+    dest: /etc/ntpsec/ntp.conf
     mode: '0644'
   notify: Reload ntpsec
   tags: ntpsec

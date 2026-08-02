@@ -12,7 +12,7 @@
     name: systemd-timesyncd
     enabled: no
     state: stopped
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Unmask chrony
   systemd:

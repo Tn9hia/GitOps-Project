@@ -1,5 +1,5 @@
 {
-  "rootDir": "/data/aptly",
+  "rootDir": "{{ aptly_root_dir }}",
   "downloadConcurrency": 4,
   "downloadSpeedLimit": 0,
   "architectures": ["amd64"],
@@ -18,17 +18,17 @@
   "skipContentsPublishing": false,
   "FileSystemPublishEndpoints": {
     "ubuntu-noble": {
-      "rootDir": "/opt/aptly/public/ubuntu",
+      "rootDir": "{{ aptly_root_dir }}/public/ubuntu",
       "linkMethod": "hardlink",
       "verifyMethod": "md5"
     },
     "docker": {
-      "rootDir": "/opt/aptly/public/docker",
+      "rootDir": "{{ aptly_root_dir }}/public/docker",
       "linkMethod": "hardlink",
       "verifyMethod": "md5"
     },
-    "kubernetes-v1.31": {
-      "rootDir": "/opt/aptly/public/kubernetes",
+    "kubernetes-v1.35": {
+      "rootDir": "{{ aptly_root_dir }}/public/kubernetes",
       "linkMethod": "hardlink",
       "verifyMethod": "md5"
     }
