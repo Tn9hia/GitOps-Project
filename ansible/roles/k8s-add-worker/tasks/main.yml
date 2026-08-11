@@ -1,0 +1,36 @@
+---
+# roles/k8s_join_worker/tasks/main.yml
+
+- name: Check whether this node already joined the cluster
+  stat:
+    path: /etc/kubernetes/kubelet.conf
+  register: k8s_kubelet_conf
+
+- name: Determine an existing control-plane node to delegate token creation
+  set_fact:
+    k8s_existing_control_plane: "{{ groups['k8s_control_plane'][0] }}"
+  when: not k8s_kubelet_conf.stat.exists
+
+- name: Generate short-lived join token on the control-plane
+  command: kubeadm token create --print-join-command --ttl=15m
+  register: kubeadm_worker_join_cmd
+  delegate_to: "{{ k8s_existing_control_plane }}"
+  changed_when: false
+  run_once: false        # mỗi worker cần delegate riêng, không dùng run_once
+  when: not k8s_kubelet_conf.stat.exists
+
+- name: Join worker node to the cluster
+  command: >-
+    {{ kubeadm_worker_join_cmd.stdout }}
+    --cri-socket={{ kubernetes_cri_socket }}
+  register: kubeadm_join_result
+  async: 300
+  poll: 10
+  when: not k8s_kubelet_conf.stat.exists
+
+- name: Verify kubelet service is active after join
+  systemd:
+    name: kubelet
+    state: started
+    enabled: true
+  when: kubeadm_join_result is changed

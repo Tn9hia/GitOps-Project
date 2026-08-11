@@ -17,6 +17,6 @@
   tags: [common, dns]
 
 
-- name: Setup apt-mirror
-  ansible.builtin.import_tasks: apt-mirror.yml
-  tags: [common, apt-mirror]
+# - name: Setup apt-mirror
+#   ansible.builtin.import_tasks: apt-mirror.yml
+#   tags: [common, apt-mirror]

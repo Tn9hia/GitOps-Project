@@ -1,0 +1,39 @@
+---
+# Add PowerDNS dnsdist Server Repositories
+- name: Ensure /etc/apt/keyrings exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+# Download PowerDNS dnsdist GPG key
+- name: Download PowerDNS dnsdist GPG key
+  ansible.builtin.get_url:
+    url: https://repo.powerdns.com/FD380FBB-pub.asc
+    dest: /etc/apt/keyrings/dnsdist-{{ pdns_dist_version }}-pub.asc
+    mode: "0644"
+
+# Add PowerDNS dnsdist pinning
+- name: Pin PowerDNS repo priority
+  ansible.builtin.copy:
+    content: |
+      Package: pdns-*
+      Pin: origin repo.powerdns.com
+      Pin-Priority: 600
+    dest: /etc/apt/preferences.d/dnsdist-{{ pdns_dist_version }}
+    mode: "0644"
+
+# Add PowerDNS DnsDist Server Repositories
+- name: Add PowerDNS DnsDist Server Repositories
+  ansible.builtin.apt_repository:
+    repo: deb [signed-by=/etc/apt/keyrings/dnsdist-{{ pdns_dist_version }}-pub.asc] http://repo.powerdns.com/ubuntu noble-dnsdist-{{ pdns_dist_version }} main
+    state: present
+    filename: powerdns
+    update_cache: yes
+
+# Install PowerDNS dnsdist
+- name: Install PowerDNS dnsdist
+  ansible.builtin.apt:
+    name: pdns-dnsdist
+    state: present
+    update_cache: true

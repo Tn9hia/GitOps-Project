@@ -1,0 +1,22 @@
+---
+# Proxy for containerd (shared with role: common)
+containerd_proxy_enabled: false
+containerd_proxy_url: "http://proxy.internal.local:3128"
+containerd_no_proxy: "localhost,127.0.0.1,10.0.0.0/8,.internal.local"
+
+cpu_arch: "amd64"
+
+# https://github.com/containerd/containerd/releases
+containerd_version: "2.3.3"
+
+# https://github.com/containernetworking/plugins/releases
+cni_version: "1.9.0"
+
+# https://github.com/opencontainers/runc/releases
+runc_version: "1.5.1"
+
+# https://kubernetes.io/releases/
+kubernetes_version: "v1.36"
+kubernetes_package_version: "1.36.0-1.1"
+kubernetes_keyring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+kubernetes_repo_file: "/etc/apt/sources.list.d/kubernetes.list"

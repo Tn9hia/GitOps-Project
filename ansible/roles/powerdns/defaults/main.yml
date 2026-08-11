@@ -1,6 +1,12 @@
 ---
-pdns_key_url: "https://repo.powerdns.com/FD380FBB-pub.asc"
+enable_dist: false
 
 pdns_db_name: pdns
 pdns_db_user: pdns
 pdns_db_password: "{{ vault_pdns_db_password }}"
+
+# PowerDNS Authoritative Server
+pdns_auth_version: "51"
+
+# PowerDNS DnsDist Server
+pdns_dist_version: "21"

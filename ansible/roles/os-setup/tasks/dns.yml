@@ -12,7 +12,18 @@
     owner: root
     group: root
     mode: '0644'
+  register: dns_config
   notify: restart systemd-resolved
+
+- name: Reboot Server to apply configuration
+  reboot:
+    msg: "Rebooting to apply DNS configuration"
+    connect_timeout: 20
+    reboot_timeout: 300
+    pre_reboot_delay: 5
+    post_reboot_delay: 30
+  when: 
+    - dns_config.changed
 
 - name: Ensure systemd-resolved enabled and running
   systemd:

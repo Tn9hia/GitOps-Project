@@ -1,0 +1,50 @@
+---
+# Add PowerDNS Authoritative Server Repositories
+- name: Ensure /etc/apt/keyrings exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+# Download PowerDNS Authoritative Server GPG key
+- name: Download PowerDNS Authoritative Server GPG key
+  ansible.builtin.get_url:
+    url: https://repo.powerdns.com/FD380FBB-pub.asc
+    dest: /etc/apt/keyrings/auth-{{ pdns_auth_version }}-pub.asc
+    mode: "0644"
+
+# Add PowerDNS Authoritative Server pinning
+- name: Pin PowerDNS repo priority
+  ansible.builtin.copy:
+    content: |
+      Package: pdns-*
+      Pin: origin repo.powerdns.com
+      Pin-Priority: 600
+    dest: /etc/apt/preferences.d/auth-{{ pdns_auth_version }}
+    mode: "0644"
+
+# Add PowerDNS Authoritative Server repository
+- name: Add PowerDNS Authoritative Server repository
+  ansible.builtin.deb822_repository:
+    name: powerdns
+    types: deb
+    uris: http://repo.powerdns.com/ubuntu
+    suites: "noble-auth-{{ pdns_auth_version }}"
+    components: main
+    signed_by: "/etc/apt/keyrings/auth-{{ pdns_auth_version }}-pub.asc"
+    state: present
+    enabled: true
+
+# Install PowerDNS Authoritative Server
+- name: Install PowerDNS Authoritative Server
+  ansible.builtin.apt:
+    name: pdns-server
+    state: present
+    update_cache: true
+
+# Configure PowerDNS Authoritative Server
+- name: Configure PowerDNS Authoritative Server
+  ansible.builtin.template:
+    src: pdns-auth.conf.j2
+    dest: /etc/powerdns/pdns-auth.conf
+    mode: "0644"

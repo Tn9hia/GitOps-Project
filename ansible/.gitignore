@@ -1,6 +1,6 @@
 # Ansible Gitignore
 # Local configuration and sensitive data
-.vault_password
+.vault_pass
 
 # Documentation
 ansible_structure_annotated.html

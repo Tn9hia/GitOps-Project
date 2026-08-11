@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+
+# Backend — PostgreSQL local trên chính node này
+launch=gpgsql
+gpgsql-host=127.0.0.1
+gpgsql-port=5432
+gpgsql-dbname={{ pdns_db_name }}
+gpgsql-user={{ pdns_db_user }}
+gpgsql-password={{ pdns_db_password }}
+
+# Chỉ dnsdist local mới forward vào đây, không expose ra client
+# Port 5300 vì port 53 trên host này đã do dnsdist lắng nghe
+local-address=127.0.0.1
+local-port=5300
+
+loglevel=4
+log-dns-queries=yes
