@@ -22,7 +22,6 @@
 - name: Join worker node to the cluster
   command: >-
     {{ kubeadm_worker_join_cmd.stdout }}
-    --cri-socket={{ kubernetes_cri_socket }}
   register: kubeadm_join_result
   async: 300
   poll: 10

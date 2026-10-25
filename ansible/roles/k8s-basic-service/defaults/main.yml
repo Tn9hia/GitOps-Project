@@ -6,3 +6,23 @@ local_kubeconfig_path: "/tmp/k8s-basic-service-kubeconfig"
 local_cilium_values_path: "/tmp/k8s-basic-service-cilium-values.yaml"
 
 cilium_chart_repo_url: "https://helm.cilium.io/"
+cilium_chart_version: "1.20.0"
+
+cilium_k8s_service_port: "6443"
+
+cilium_pod_cidrs:
+  - "10.244.0.0/16"
+cilium_pod_cidr_mask_size: 24
+
+cilium_routing_mode: tunnel
+cilium_tunnel_protocol: vxlan
+
+cilium_operator_replicas: 1
+
+cilium_hubble_metrics:
+  - dns
+  - drop
+  - tcp
+  - flow
+  - icmp
+  - http

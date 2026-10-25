@@ -1,0 +1,29 @@
+# values-argocd-lab.yaml — lab config, KHÔNG dùng cho prod
+global:
+  domain: argocd.lab.local   # đổi theo domain lab của mày, hoặc bỏ nếu dùng port-forward
+
+redis-ha:
+  enabled: false   # lab không cần HA
+
+controller:
+  replicas: 1
+
+server:
+  replicas: 1
+  service:
+    type: ClusterIP   # lab: dùng port-forward, không cần Ingress/LB
+  # ingress:
+  #   enabled: false  # bật lên nếu muốn expose qua domain thật
+
+configs:
+  params:
+    server.insecure: true   # OK cho lab (bỏ qua TLS), PROD thì để false
+
+repoServer:
+  replicas: 1
+
+applicationSet:
+  enabled: true   # bật nếu mày muốn thử ApplicationSet sau này
+
+dex:
+  enabled: false   # tắt nếu chưa cần SSO, đỡ rối

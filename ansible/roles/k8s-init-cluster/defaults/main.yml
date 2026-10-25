@@ -4,7 +4,7 @@ pod_network_cidr: "10.244.0.0/16" # Dont need if using cilium IPAM cluster-pool
 k8s_service_cidr: "10.96.0.0/12"
 k8s_control_plane_endpoint: "127.0.0.1:6443"
 apiserver_address: "127.0.0.1"
-kubernetes_release: "1.36.2" 
+kubernetes_release: "1.36.1" 
 kubeconfig_path: "/home/ubuntu/.kube/config"
 
 
